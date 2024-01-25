@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.1.0
 -- https://www.phpmyadmin.net/
 --
--- Hôte : 127.0.0.1:3306
--- Généré le : ven. 19 jan. 2024 à 07:49
--- Version du serveur : 8.0.31
--- Version de PHP : 8.0.26
+-- Hôte : 127.0.0.1
+-- Généré le : jeu. 25 jan. 2024 à 09:21
+-- Version du serveur :  10.4.18-MariaDB
+-- Version de PHP : 7.3.27
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -27,13 +27,11 @@ SET time_zone = "+00:00";
 -- Structure de la table `codes`
 --
 
-DROP TABLE IF EXISTS `codes`;
-CREATE TABLE IF NOT EXISTS `codes` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` int NOT NULL,
-  `email` varchar(50) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 ;
+CREATE TABLE `codes` (
+  `id` int(11) NOT NULL,
+  `code` int(11) NOT NULL,
+  `email` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Déchargement des données de la table `codes`
@@ -61,15 +59,12 @@ INSERT INTO `codes` (`id`, `code`, `email`) VALUES
 -- Structure de la table `commentaires`
 --
 
-DROP TABLE IF EXISTS `commentaires`;
-CREATE TABLE IF NOT EXISTS `commentaires` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `id_demande` int NOT NULL,
+CREATE TABLE `commentaires` (
+  `id` int(11) NOT NULL,
+  `id_demande` int(11) NOT NULL,
   `content` text NOT NULL,
-  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `id_demande` (`id_demande`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 ;
+  `created` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Déchargement des données de la table `commentaires`
@@ -86,23 +81,20 @@ INSERT INTO `commentaires` (`id`, `id_demande`, `content`, `created`) VALUES
 -- Structure de la table `demandes`
 --
 
-DROP TABLE IF EXISTS `demandes`;
-CREATE TABLE IF NOT EXISTS `demandes` (
-  `id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `demandes` (
+  `id` int(11) NOT NULL,
   `nom_patient` varchar(100) NOT NULL,
-  `email` varchar(50) CHARACTER SET utf8mb4  DEFAULT NULL,
+  `email` varchar(50) DEFAULT NULL,
   `datenais` date NOT NULL,
   `tel` varchar(20) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `rdv` date DEFAULT NULL,
-  `id_type` int NOT NULL,
-  `id_medecin` int DEFAULT NULL,
+  `id_type` int(11) NOT NULL,
+  `id_medecin` int(11) DEFAULT NULL,
   `lieu` varchar(255) NOT NULL,
   `date_rdv` date DEFAULT NULL,
-  `ordonnance` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `id_type` (`id_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 ;
+  `ordonnance` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Déchargement des données de la table `demandes`
@@ -119,19 +111,15 @@ INSERT INTO `demandes` (`id`, `nom_patient`, `email`, `datenais`, `tel`, `create
 -- Structure de la table `messages`
 --
 
-DROP TABLE IF EXISTS `messages`;
-CREATE TABLE IF NOT EXISTS `messages` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `id_envoyeur` int NOT NULL,
-  `id_receveur` int NOT NULL,
+CREATE TABLE `messages` (
+  `id` int(11) NOT NULL,
+  `id_envoyeur` int(11) NOT NULL,
+  `id_receveur` int(11) NOT NULL,
   `message` text NOT NULL,
-  `lu` tinyint(1) NOT NULL DEFAULT '0',
+  `lu` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` varchar(100) NOT NULL,
-  `ajout` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `id_envoyeur` (`id_envoyeur`),
-  KEY `id_receveur` (`id_receveur`)
-) ENGINE=InnoDB AUTO_INCREMENT=169 DEFAULT CHARSET=utf8mb4 ;
+  `ajout` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Déchargement des données de la table `messages`
@@ -173,18 +161,34 @@ INSERT INTO `messages` (`id`, `id_envoyeur`, `id_receveur`, `message`, `lu`, `cr
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `soustypes`
+--
+
+CREATE TABLE `soustypes` (
+  `id` int(11) NOT NULL,
+  `nom_sous_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `soustypes`
+--
+
+INSERT INTO `soustypes` (`id`, `nom_sous_type`) VALUES
+(1, 'PIED'),
+(2, 'CHEVILLE');
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `tokens`
 --
 
-DROP TABLE IF EXISTS `tokens`;
-CREATE TABLE IF NOT EXISTS `tokens` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `id_user` int NOT NULL,
+CREATE TABLE `tokens` (
+  `id` int(11) NOT NULL,
+  `id_user` int(11) NOT NULL,
   `token` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `id_user` (`id_user`)
-) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=utf8mb4 ;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Déchargement des données de la table `tokens`
@@ -243,7 +247,8 @@ INSERT INTO `tokens` (`id`, `id_user`, `token`, `created_at`) VALUES
 (100, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZGF0ZSI6MTcwNTUxMDM2OTIyMiwiaWF0IjoxNzA1NTEwMzY5fQ.fyRwfSKIsJfA43TNt905jJ2xqQ4BRSKm6eaqTfrMWNQ', '2024-01-17 16:52:49'),
 (101, 17, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImRhdGUiOjE3MDU1MTA4NjkxMDUsImlhdCI6MTcwNTUxMDg2OX0.NH_vBofj76Z6RV9cm8bf_dETGTiGKWVHZ-wHqJU6YSo', '2024-01-17 17:01:09'),
 (102, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZGF0ZSI6MTcwNTU1NTQ3NDgzNywiaWF0IjoxNzA1NTU1NDc0fQ.hMUJHSNqCiYGsQC3ZTtsohYLO5Ila2QjnKKhlM9NcR4', '2024-01-18 05:24:34'),
-(103, 17, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImRhdGUiOjE3MDU1NjQ3MDcyNDksImlhdCI6MTcwNTU2NDcwN30.EoE8e4VkgsmzPNsdgq6RzEwUyZapMBoRHdrbzi_cmZw', '2024-01-18 07:58:27');
+(103, 17, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImRhdGUiOjE3MDU1NjQ3MDcyNDksImlhdCI6MTcwNTU2NDcwN30.EoE8e4VkgsmzPNsdgq6RzEwUyZapMBoRHdrbzi_cmZw', '2024-01-18 07:58:27'),
+(104, 1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZGF0ZSI6MTcwNjE3MDU2Njk2MCwiaWF0IjoxNzA2MTcwNTY2fQ.BT7oHMP6WqkONFIZR-oulES5GDvesVIJp4bBAfQbpfE', '2024-01-25 08:16:06');
 
 -- --------------------------------------------------------
 
@@ -251,13 +256,11 @@ INSERT INTO `tokens` (`id`, `id_user`, `token`, `created_at`) VALUES
 -- Structure de la table `types`
 --
 
-DROP TABLE IF EXISTS `types`;
-CREATE TABLE IF NOT EXISTS `types` (
-  `id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `types` (
+  `id` int(11) NOT NULL,
   `nom_type` varchar(50) NOT NULL,
-  `nom_sous_type` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 ;
+  `nom_sous_type` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Déchargement des données de la table `types`
@@ -278,28 +281,135 @@ INSERT INTO `types` (`id`, `nom_type`, `nom_sous_type`) VALUES
 -- Structure de la table `users`
 --
 
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
   `nom` varchar(100) NOT NULL,
   `tel` varchar(20) NOT NULL,
   `adresse` varchar(50) DEFAULT NULL,
   `email` varchar(50) NOT NULL,
   `password` text NOT NULL,
   `rpps` varchar(50) NOT NULL,
-  `role` enum('admin','radiologue','secretaire','medecin') CHARACTER SET utf8mb4  NOT NULL,
-  `is_verified` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 ;
+  `role` enum('admin','radiologue','secretaire','medecin') NOT NULL,
+  `is_verified` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Déchargement des données de la table `users`
 --
 
 INSERT INTO `users` (`id`, `nom`, `tel`, `adresse`, `email`, `password`, `rpps`, `role`, `is_verified`) VALUES
-(1, 'Tommy', '0344824468', 'Tanambao', 'tommymiza20@gmail.com', '$2b$10$srkZ0csYhp7MfHsqS5eHTuDsthS1rchw2AgYedfaQ1JAS5DQ1rPjK', '0315225422', 'admin', 1),
-(17, 'Miza', '0336350015', 'Fianarantsoa', 'tommymiza6@gmail.com', '$2b$10$1VJlDfqg5KW2p9MIB.Hc8ecoGwvE5Yt.x4yqkrxaK2Zw0.aIRPCBC', '655', 'radiologue', 1);
+(1, 'Admin', '0344824468', 'Tanambao', 'admin@gmail.com', '$2b$10$srkZ0csYhp7MfHsqS5eHTuDsthS1rchw2AgYedfaQ1JAS5DQ1rPjK', '0315225422', 'admin', 1),
+(17, 'Robert', '0336350015', 'Fianarantsoa', 'radiologue@gmail.com', '$2b$10$1VJlDfqg5KW2p9MIB.Hc8ecoGwvE5Yt.x4yqkrxaK2Zw0.aIRPCBC', '655', 'radiologue', 1);
+
+--
+-- Index pour les tables déchargées
+--
+
+--
+-- Index pour la table `codes`
+--
+ALTER TABLE `codes`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Index pour la table `commentaires`
+--
+ALTER TABLE `commentaires`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_demande` (`id_demande`);
+
+--
+-- Index pour la table `demandes`
+--
+ALTER TABLE `demandes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_type` (`id_type`);
+
+--
+-- Index pour la table `messages`
+--
+ALTER TABLE `messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_envoyeur` (`id_envoyeur`),
+  ADD KEY `id_receveur` (`id_receveur`);
+
+--
+-- Index pour la table `soustypes`
+--
+ALTER TABLE `soustypes`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Index pour la table `tokens`
+--
+ALTER TABLE `tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_user` (`id_user`);
+
+--
+-- Index pour la table `types`
+--
+ALTER TABLE `types`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Index pour la table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- AUTO_INCREMENT pour les tables déchargées
+--
+
+--
+-- AUTO_INCREMENT pour la table `codes`
+--
+ALTER TABLE `codes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+
+--
+-- AUTO_INCREMENT pour la table `commentaires`
+--
+ALTER TABLE `commentaires`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT pour la table `demandes`
+--
+ALTER TABLE `demandes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+
+--
+-- AUTO_INCREMENT pour la table `messages`
+--
+ALTER TABLE `messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=169;
+
+--
+-- AUTO_INCREMENT pour la table `soustypes`
+--
+ALTER TABLE `soustypes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT pour la table `tokens`
+--
+ALTER TABLE `tokens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
+
+--
+-- AUTO_INCREMENT pour la table `types`
+--
+ALTER TABLE `types`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT pour la table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- Contraintes pour les tables déchargées
@@ -315,7 +425,7 @@ ALTER TABLE `commentaires`
 -- Contraintes pour la table `demandes`
 --
 ALTER TABLE `demandes`
-  ADD CONSTRAINT `demandes_ibfk_1` FOREIGN KEY (`id_type`) REFERENCES `types` (`id`) ON DELETE RESTRICT;
+  ADD CONSTRAINT `demandes_ibfk_1` FOREIGN KEY (`id_type`) REFERENCES `types` (`id`);
 
 --
 -- Contraintes pour la table `messages`
