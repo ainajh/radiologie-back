@@ -7,6 +7,7 @@ router
   .use("/user", require("./user.routes"))
   .use("/demande", require("./demande.routes"))
   .use("/type", require("./type.routes"))
+  .use("/schedule", require("./schedule.routes"))
   .get("/message/getmessagenonlu", async (req, res) => {
     const { id } = req.query;
     try {

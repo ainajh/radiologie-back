@@ -301,6 +301,19 @@ INSERT INTO `users` (`id`, `nom`, `tel`, `adresse`, `email`, `password`, `rpps`,
 (1, 'Admin', '0344824468', 'Tanambao', 'admin@gmail.com', '$2b$10$srkZ0csYhp7MfHsqS5eHTuDsthS1rchw2AgYedfaQ1JAS5DQ1rPjK', '0315225422', 'admin', 1),
 (17, 'Robert', '0336350015', 'Fianarantsoa', 'radiologue@gmail.com', '$2b$10$1VJlDfqg5KW2p9MIB.Hc8ecoGwvE5Yt.x4yqkrxaK2Zw0.aIRPCBC', '655', 'radiologue', 1);
 
+
+--
+-- Structure de la table `schedule`
+--
+CREATE TABLE schedule (
+  id int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+  date DATE Not NULL,
+  shift VARCHAR(10) NOT NULL CHECK (shift in ('Morning', 'Afternoon', 'Evening')), 
+  types_id int(11) NOT NULL REFERENCES  types(id) ON  DELETE CASCADE, 
+  person_id int(11) NOT NULL REFERENCES users(id), 
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 --
 -- Index pour les tables déchargées
 --
@@ -439,7 +452,9 @@ ALTER TABLE `messages`
 --
 ALTER TABLE `tokens`
   ADD CONSTRAINT `tokens_ibfk_1` FOREIGN KEY (`id_user`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-COMMIT;
+COMMIT; 
+
+
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
