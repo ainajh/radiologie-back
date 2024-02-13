@@ -86,7 +86,6 @@ const updateOne = async (req, res) => {
     
     const query =  Query.buildUpdateQuery("schedule", updates, {"id":id})
     values = [...values , id]
-    console.log("update : ",updates, values, query)
 
 
     db.query(query, values, (err, result) => {
