@@ -76,7 +76,7 @@ const updateOne = async (req, res) => {
         values = [...values , updates.person_id]
     }
 
-    const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*",{... select}), selectValue); 
+    const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", select), selectValue); 
 
     if(rows != []){
       return res.status(200).json({ message: "Impossible de mettre a jour le schedule"});
