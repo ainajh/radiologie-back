@@ -11,13 +11,13 @@ const create = async (req, res) => {
     const { idPerson, shift, date, idType  } = req.body;
 
     if ( Validaion.isEmptyOrNull(idPerson) || !Validaion.isTimeOfDay(shift) || !Validaion.isDate(date) || Validaion.isEmptyOrNull(idType)) {
-      return res.status(400).json({ error: "Champ invalide!",});
+      return res.status(422).json({ error: "Champ invalide!",});
     }
 
     const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", {"schedule.date": null,"schedule.person_id":null," schedule.shift":null} ),[new Date(date).toISOString(),idPerson, shift]); 
-  console.log(rows)
-    if(rows !=  []){
-      return res.status(200).json({ message: "Impossible de creer un schedule pour une meme person sur meme date and dataTime"});
+
+    if(rows.length > 0){
+      return res.status(422).json({ message: "Impossible de creer un schedule pour une meme person sur meme date and dataTime"});
     }
 
     const columns = ['date', 'shift', 'types_id', 'person_id'];
@@ -46,7 +46,7 @@ const updateOne = async (req, res) => {
     const { id } = req.params
     const { date, shift, idType, idPerson } = req.body;
 
-    if (Validaion.isEmptyOrNull(id))  return res.status(400).json({error: "Params invalide!",});
+    if (Validaion.isEmptyOrNull(id))  return res.status(422).json({error: "Params invalide!",});
 
     let updates =  {}
     let select =  {}
@@ -78,8 +78,9 @@ const updateOne = async (req, res) => {
 
     const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", select), selectValue); 
 
-    if(rows != []){
-      return res.status(200).json({ message: "Impossible de mettre a jour le schedule"});
+  
+    if( rows.length > 0){
+      return res.status(422).json({ message: "Impossible de mettre a jour le schedule"});
     }
     
     
@@ -108,7 +109,7 @@ const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (Validaion.isEmptyOrNull(id))  return res.status(400).json({message: "Params invalide!",});
+    if (Validaion.isEmptyOrNull(id))  return res.status(422).json({message: "Params invalide!",});
 
     db.query(Query.buildDeleteQuery("schedule", { id: id }), [id], (err, result) => {
 
