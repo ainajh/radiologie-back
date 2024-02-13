@@ -1,4 +1,5 @@
 const db = require("../db");
+const dbPromise = require("../db-for-promise");
 const Validaion = require("../utils/validations");
 const Query  = require("../utils/build-query");
 const QuerySchedule  = require("../utils/build-schedule-select-query");
@@ -13,10 +14,11 @@ const create = async (req, res) => {
       return res.status(400).json({ error: "Champ invalide!",});
     }
 
-        
-    ///
-    /// need to ckeck if the user already have a schedule in the same date
-    ///
+    const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", {"schedule.date": null,"schedule.person_id":null," schedule.shift":null} ),[new Date(date).toISOString(),idPerson, shift]); 
+  console.log(rows)
+    if(rows !=  []){
+      return res.status(200).json({ message: "Impossible de creer un schedule pour une meme person sur meme date and dataTime"});
+    }
 
     const columns = ['date', 'shift', 'types_id', 'person_id'];
 
@@ -47,14 +49,20 @@ const updateOne = async (req, res) => {
     if (Validaion.isEmptyOrNull(id))  return res.status(400).json({error: "Params invalide!",});
 
     let updates =  {}
+    let select =  {}
+    let selectValue =  []
     let values =  []
     
     if(Validaion.isDate(date)) {
         updates =  {...updates, "date" : new Date(date) }
+        select =  {...select, "schedule.date" : new Date(date).toISOString() }
+        selectValue = [...selectValue, new Date(date).toISOString()]
         values = [...values , updates.date]
     }
     if(Validaion.isTimeOfDay(shift)){ 
         updates =  {...updates, "shift" : shift }
+        select =  {...select, "schedule.shift" : shift }
+        selectValue = [...selectValue, shift]
         values = [...values , updates.shift]
     }
     if(!Validaion.isEmptyOrNull(idType)) {
@@ -63,7 +71,15 @@ const updateOne = async (req, res) => {
     }
     if(!Validaion.isEmptyOrNull(idPerson)) {
         updates =  {...updates, "person_id" : idPerson }
+        select =  {...select, "schedule.person_id" : idPerson }
+       selectValue = [...selectValue, idPerson]
         values = [...values , updates.person_id]
+    }
+
+    const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*",{... select}), selectValue); 
+
+    if(rows != []){
+      return res.status(200).json({ message: "Impossible de mettre a jour le schedule"});
     }
     
     

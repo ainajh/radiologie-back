@@ -52,11 +52,21 @@ const  buildDeleteQuery =  (tableName, condition) => {
 }
 
 
-const  buildSelectQuery = (tableName, columns = '*', condition = '', orderBy = '', limit = '') => {
+const  buildSelectQuery = (tableName, columns = '*', condition, orderBy = '', limit = '') => {
 
     let query = `SELECT ${columns} FROM ${tableName}`;
 
-    if (condition) query += ` WHERE ${condition}`;
+    // if (condition) query += ` WHERE ${condition}`;
+    if (condition) {
+
+        query += ' WHERE ';
+        const conditionValues = [];
+
+        for (const key in condition) {
+            if (condition.hasOwnProperty(key)) conditionValues.push(`${key} = ?`);  
+        }
+        query += conditionValues.join(' AND ');
+    }
 
     if (orderBy) query += ` ORDER BY ${orderBy}`;
 
