@@ -50,40 +50,60 @@ const updateOne = async (req, res) => {
 
     let updates =  {}
     let select =  {}
-    let selectValue =  []
+    let selectedValues = []
     let values =  []
+    console.log(req.body)
     
     if(Validaion.isDate(date)) {
-        updates =  {...updates, "date" : new Date(date) }
+        updates =  {...updates, "date" : new Date(date)  }
         select =  {...select, "schedule.date" : new Date(date).toISOString() }
-        selectValue = [...selectValue, new Date(date).toISOString()]
-        values = [...values , updates.date]
+        selectedValues = [...selectedValues , new Date(date).toISOString()]
+        values = [...values , new Date(date)]
     }
+    
     if(Validaion.isTimeOfDay(shift)){ 
-        updates =  {...updates, "shift" : shift }
-        select =  {...select, "schedule.shift" : shift }
-        selectValue = [...selectValue, shift]
-        values = [...values , updates.shift]
-    }
-    if(!Validaion.isEmptyOrNull(idType)) {
-        updates =  {...updates, "types_id" : idType }
-        values = [...values , updates.types_id]
-    }
+      updates =  {...updates, "shift" : shift }
+      select =  {...select, "schedule.shift" : shift }
+      selectedValues = [...selectedValues , shift]
+      values = [...values , updates.shift]
+    } 
+   
     if(!Validaion.isEmptyOrNull(idPerson)) {
         updates =  {...updates, "person_id" : idPerson }
         select =  {...select, "schedule.person_id" : idPerson }
-       selectValue = [...selectValue, idPerson]
+        selectedValues = [...selectedValues , idPerson]
         values = [...values , updates.person_id]
+
     }
 
-    const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", select), selectValue); 
+    if(!Validaion.isEmptyOrNull(idType)) {
+      updates =  {...updates, "types_id" : idType }
+      select =  {...select, "schedule.types_id" : idType }
+      selectedValues = [...selectedValues , idType]
+      values = [...values , updates.types_id]
+     }
 
-  
+    const [rows, fields] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", select), values); 
+    
     if( rows.length > 0){
       return res.status(422).json({ message: "Impossible de mettre a jour le schedule"});
     }
     
+    const [rowsSecond, fieldsSecond ] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", {"schedule.id": id}), [id]); 
     
+    if( rowsSecond.length === 0){
+      return res.status(422).json({ message: "Impossible de mettre a jour le schedule"});
+    }
+
+    if (new Date(rowsSecond[0].date).toLocaleDateString() !=  updates.date.toLocaleDateString() || rowsSecond[0].shift != updates.shift){
+      delete select["schedule.types_id"]
+      selectedValues.pop()
+      const [rowsFird, fieldsFird] =  await dbPromise.query(Query.buildSelectQuery( "schedule", "*", select),selectedValues ); 
+      if( rowsFird.length > 0){
+        return res.status(422).json({ message: "Impossible de mettre a jour le schedule"});
+      }
+    }
+
     const query =  Query.buildUpdateQuery("schedule", updates, {"id":id})
     values = [...values , id]
 

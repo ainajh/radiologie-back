@@ -12,7 +12,7 @@ const isDate =  (date) =>{
 }
 
 const isTimeOfDay =  (input) => {
-    const regex = /^(Morning|Afternoon|Evening)$/i;
+    const regex = /^(Morning|Afternoon|Evening|Night)$/i;
     return regex.test(input);
 }
 
