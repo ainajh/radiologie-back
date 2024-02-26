@@ -311,6 +311,7 @@ CREATE TABLE schedule (
   shift VARCHAR(10) NOT NULL CHECK (shift in ('Morning', 'Afternoon', 'Evening', 'Night')), 
   types_id int(11) NOT NULL REFERENCES  types(id) ON  DELETE CASCADE, 
   person_id int(11) NOT NULL REFERENCES users(id), 
+  type_of_schedule int(11) NOT NULL DEFAULT 0, 
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

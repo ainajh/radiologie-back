@@ -16,8 +16,13 @@ const isTimeOfDay =  (input) => {
     return regex.test(input);
 }
 
+const isNumber = (input) => {
+    return typeof  input === "number"
+}
+
 module.exports = {
     isTimeOfDay,
     isDate,
-    isEmptyOrNull
+    isEmptyOrNull, 
+    isNumber
 };

@@ -5,7 +5,7 @@ const auth = require("../middlewares/authentication");
 router
   .get(
     "/",
-    auth(["admin", "medecin", "radiologue", "secretaire"]),
+    // auth(["admin", "medecin", "radiologue", "secretaire"]),
     userController.getAll
   )
   .get(
