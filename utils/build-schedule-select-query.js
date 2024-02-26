@@ -16,6 +16,13 @@ const buildScheduleQuery = (condition) => {
   return query;
 };
 
+const selectDataBetweenDatesQuery = `
+        SELECT s.id, s.date, s.shift, s.person_id as idPerson, s.types_id AS idType, s.type_of_schedule AS typeOfSchedule
+        FROM schedule s
+        WHERE s.date BETWEEN ? AND ?;
+      `;
+
 module.exports = {
   buildScheduleQuery,
+  selectDataBetweenDatesQuery,
 };

@@ -21,7 +21,6 @@ const create = async (req, res) => {
     // creation schedule for type working day
     if (typeOfSchedule === 0) {
       if (!Validaion.isDate(date)) return res.status(422).json({ error: "Champ invalide!" });
-      console.log("first alefa 4", req.body);
       const [rows, fields] = await dbPromise.query(
         Query.buildSelectQuery("schedule", "*", {
           "schedule.date": null,
@@ -68,11 +67,9 @@ const create = async (req, res) => {
       const typeQuery = Query.buildSelectQuery("types");
 
       const [typeList, fields] = await dbPromise.query(typeQuery);
-      console.log("list ", typeList);
 
       for (e in dateList) {
         for (let i = 0; i < typeList.length; i++) {
-          console.log("list ", typeList[i], dateList[e]);
           await dbPromise.query(query, [new Date(dateList[e]), "Afternoon", typeList[i].id, idPerson, typeOfSchedule]);
           await dbPromise.query(query, [new Date(dateList[e]), "Morning", typeList[i].id, idPerson, typeOfSchedule]);
         }
@@ -99,7 +96,6 @@ const updateOne = async (req, res) => {
     let select = {};
     let selectedValues = [];
     let values = [];
-    console.log(req.body);
 
     if (Validaion.isDate(date)) {
       updates = { ...updates, date: new Date(date) };
@@ -220,13 +216,10 @@ const copyPaste = async (req, res) => {
     if (!Validaion.isDate(copyDate[0]) && !Validaion.isDate(copyDate[1]) && !Validaion.isDate(pasteDate[0]) && !Validaion.isDate([1]))
       return res.status(422).json({ message: "Data not processable." });
 
-    const selectDataBetweenDatesQuery = `
-        SELECT s.id, s.date, s.shift, s.person_id as idPerson, s.types_id AS idType, s.type_of_schedule AS typeOfSchedule
-        FROM schedule s
-        WHERE s.date BETWEEN ? AND ?;
-      `;
-
-    const [dataToCopy, fields] = await dbPromise.query(selectDataBetweenDatesQuery, [new Date(copyDate[0]), new Date(copyDate[1])]);
+    const [dataToCopy, fields] = await dbPromise.query(QuerySchedule.selectDataBetweenDatesQuery, [
+      new Date(copyDate[0]).toISOString(),
+      new Date(copyDate[1]).toISOString(),
+    ]);
 
     const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule"];
 
@@ -237,13 +230,7 @@ const copyPaste = async (req, res) => {
 
     for (e in dateListToCopy) {
       for (i in dataToCopy) {
-        console.log(
-          "list ",
-          dataToCopy[i].date.toLocaleDateString(),
-          new Date(dateListToCopy[e]).toLocaleDateString(),
-          dataToCopy[i].date.toLocaleDateString() === new Date(dateListToCopy[e]).toLocaleDateString()
-        );
-        if (dataToCopy[i].date.toLocaleDateString() === new Date(dateListToCopy[e]).toLocaleDateString()) {
+        if (new Date(dataToCopy[i].date).toLocaleDateString() === new Date(dateListToCopy[e]).toLocaleDateString()) {
           await dbPromise.query(query, [
             new Date(dateListToPaste[e]),
             dataToCopy[i].shift,
