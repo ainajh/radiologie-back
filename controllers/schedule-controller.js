@@ -15,11 +15,11 @@ const create = async (req, res) => {
       Validation.isEmptyOrNull(idType) ||
       !Validation.isNumber(typeOfSchedule)
     ) {
-      return res.status(422).json({ error: "Champ invalide!" });
+      return res.status(422).json({ message: "Champ invalide!" });
     }
 
     // creation schedule for type working day
-    if (!Validation.isDate(date)) return res.status(422).json({ error: "Champ invalide!" });
+    if (!Validation.isDate(date)) return res.status(422).json({ message: "Champ invalide!" });
     const [rows, fields] = await dbPromise.query(
       Query.buildSelectQuery("schedule", "*", {
         "schedule.date": null,
@@ -73,7 +73,7 @@ const updateOne = async (req, res) => {
     const { id } = req.params;
     const { date, shift, idType, idPerson } = req.body;
 
-    if (Validation.isEmptyOrNull(id)) return res.status(422).json({ error: "Params invalide!" });
+    if (Validation.isEmptyOrNull(id)) return res.status(422).json({ message: "Params invalide!" });
 
     let updates = {};
     let select = {};
@@ -255,9 +255,9 @@ const copyPaste = async (req, res) => {
       }
     }
 
-    return res.status(200).json({ data: dataToCopy });
+    return res.status(200).json({ data: dataToCopy, message: "Schedule updated successfully! " });
   } catch (e) {
-    console.log(" Error on copyPate : ", e);
+    return res.status(500).json({ message: "Error on copyPate! " });
   }
 };
 

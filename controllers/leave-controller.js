@@ -24,7 +24,7 @@ const create = async (req, res) => {
       new Date(dateStart).toISOString(),
     ]);
 
-    if (isOverlap.length > 0) return res.status(400).json({ error: "Date overlap with existing leave entry" });
+    if (isOverlap.length > 0) return res.status(422).json({ message: "Date overlap with existing leave entry" });
 
     const columns = ["type_of_leave", "person_id", "date_start", "date_end"];
 
@@ -37,7 +37,7 @@ const create = async (req, res) => {
       return res.status(201).send({ message: "Leave créé avec succès", data: result });
     });
   } catch (e) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -57,7 +57,7 @@ const isDisponible = async (req, res) => {
     if (isOverlap.length > 0) return res.status(200).json({ isDisponible: false });
     return res.status(200).json({ isDisponible: true });
   } catch (e) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -73,7 +73,7 @@ const getOne = async (req, res) => {
       (err, results) => {
         if (err) {
           console.error("Error fetching leave entries:", err);
-          res.status(500).json({ error: "Internal Server Error" });
+          res.status(500).json({ message: "Internal Server Error" });
           return;
         }
 
@@ -81,7 +81,7 @@ const getOne = async (req, res) => {
       }
     );
   } catch (e) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -92,7 +92,7 @@ const getAll = async (req, res) => {
       (err, results) => {
         if (err) {
           console.error("Error fetching leave entries:", err);
-          res.status(500).json({ error: "Internal Server Error" });
+          res.status(500).json({ message: "Internal Server Error" });
           return;
         }
 
@@ -100,7 +100,7 @@ const getAll = async (req, res) => {
       }
     );
   } catch (e) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -140,13 +140,13 @@ const deleteOne = async (req, res) => {
       }
 
       if (result.affectedRows === 0) {
-        return res.status(422).json({ error: "Leave entry not found" });
+        return res.status(422).json({ message: "Leave entry not found" });
       } else {
         return res.status(200).json({ message: "Leave entry deleted successfully" });
       }
     });
   } catch (e) {
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -172,7 +172,7 @@ const updateOne = async (req, res) => {
     new Date(dateStart).toISOString(),
   ]);
 
-  if (isOverlap.length > 0) return res.status(400).json({ error: "Date overlap with existing leave entry" });
+  if (isOverlap.length > 0) return res.status(422).json({ message: "Date overlap with existing leave entry" });
 
   db.query(
     "UPDATE `leave` SET type_of_leave = ?, date_start = ?, date_end = ? WHERE id = ?",
@@ -180,11 +180,11 @@ const updateOne = async (req, res) => {
     (err, result) => {
       if (err) {
         console.error("Error updating leave entry:", err);
-        return res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
       }
 
       if (result.affectedRows === 0) {
-        return res.status(422).json({ error: "Leave entry not found" });
+        return res.status(422).json({ message: "Leave entry not found" });
       } else {
         return res.status(200).json({ message: "Leave entry updated successfully" });
       }
