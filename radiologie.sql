@@ -305,7 +305,7 @@ INSERT INTO `users` (`id`, `nom`, `tel`, `adresse`, `email`, `password`, `rpps`,
 --
 -- Structure de la table `schedule`
 --
-CREATE TABLE schedule (
+CREATE TABLE `schedule` (
   id int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
   date DATE Not NULL,
   shift VARCHAR(10) NOT NULL CHECK (shift in ('Morning', 'Afternoon', 'Evening', 'Night')), 
@@ -314,6 +314,19 @@ CREATE TABLE schedule (
   type_of_schedule int(11) NOT NULL DEFAULT 0, 
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Structure de la table `leave`
+--
+CREATE TABLE `leave` (
+  id int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+  type_of_leave VARCHAR(20) NOT NULL,
+  person_id int(11) NOT NULL REFERENCES users(id), 
+  date_start DATE NOT NULL,
+  date_end DATE NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 --
 -- Index pour les tables déchargées

@@ -1,6 +1,6 @@
 const db = require("../db");
 const dbPromise = require("../db-for-promise");
-const Validaion = require("../utils/validations");
+const Validation = require("../utils/validations");
 const DateUtils = require("../utils/get-list-date-between");
 const Query = require("../utils/build-query");
 const QuerySchedule = require("../utils/build-schedule-select-query");
@@ -10,75 +10,58 @@ const create = async (req, res) => {
     const { idPerson, shift, date, idType, typeOfSchedule, dateStart, dateEnd } = req.body;
 
     if (
-      Validaion.isEmptyOrNull(idPerson) ||
-      !Validaion.isTimeOfDay(shift) ||
-      Validaion.isEmptyOrNull(idType) ||
-      !Validaion.isNumber(typeOfSchedule)
+      Validation.isEmptyOrNull(idPerson) ||
+      !Validation.isTimeOfDay(shift) ||
+      Validation.isEmptyOrNull(idType) ||
+      !Validation.isNumber(typeOfSchedule)
     ) {
       return res.status(422).json({ error: "Champ invalide!" });
     }
 
     // creation schedule for type working day
-    if (typeOfSchedule === 0) {
-      if (!Validaion.isDate(date)) return res.status(422).json({ error: "Champ invalide!" });
-      const [rows, fields] = await dbPromise.query(
-        Query.buildSelectQuery("schedule", "*", {
-          "schedule.date": null,
-          "schedule.person_id": null,
-          "schedule.shift": null,
-        }),
-        [new Date(date).toISOString(), idPerson, shift]
-      );
+    if (!Validation.isDate(date)) return res.status(422).json({ error: "Champ invalide!" });
+    const [rows, fields] = await dbPromise.query(
+      Query.buildSelectQuery("schedule", "*", {
+        "schedule.date": null,
+        "schedule.person_id": null,
+        "schedule.shift": null,
+      }),
+      [new Date(date).toISOString(), idPerson, shift]
+    );
 
-      if (rows.length > 0) {
-        return res.status(422).json({
-          message: "Impossible de creer un schedule pour une meme person sur meme date and dataTime",
-        });
-      }
-
-      const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule"];
-
-      const query = Query.buildInsertQuery("schedule", columns);
-
-      db.query(query, [new Date(date), shift, idType, idPerson, typeOfSchedule], (err, result) => {
-        if (err)
-          return res.status(500).json({
-            message: "Erreur lors de la création du schedule",
-            error: err,
-          });
-
-        return res.status(201).send({
-          message: "Schedule créé avec succès",
-          data: result,
-        });
+    if (rows.length > 0) {
+      return res.status(422).json({
+        message: "Impossible de creer un schedule pour une meme personne sur meme date and dataTime",
       });
     }
 
-    // creation schedule for type Holiday
-    if (typeOfSchedule === 1) {
-      if (!Validaion.isDate(dateStart) && !Validaion.isDate(dateEnd)) return res.status(422).json({ error: "Champ invalide!" });
+    const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
+      idPerson,
+      new Date(date).toISOString(),
+      new Date(date).toISOString(),
+    ]);
 
-      const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule"];
+    if (isOverlap.length > 0)
+      return res.status(422).json({
+        message: "Impossible de creer un schedule pour une personne en congé",
+      });
 
-      const query = Query.buildInsertQuery("schedule", columns);
+    const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule"];
 
-      const dateList = DateUtils.getDates(dateStart, dateEnd);
+    const query = Query.buildInsertQuery("schedule", columns);
 
-      const typeQuery = Query.buildSelectQuery("types");
+    db.query(query, [new Date(date), shift, idType, idPerson, typeOfSchedule], (err, result) => {
+      if (err)
+        return res.status(500).json({
+          message: "Erreur lors de la création du schedule",
+          error: err,
+        });
 
-      const [typeList, fields] = await dbPromise.query(typeQuery);
-
-      for (e in dateList) {
-        for (let i = 0; i < typeList.length; i++) {
-          await dbPromise.query(query, [new Date(dateList[e]), "Afternoon", typeList[i].id, idPerson, typeOfSchedule]);
-          await dbPromise.query(query, [new Date(dateList[e]), "Morning", typeList[i].id, idPerson, typeOfSchedule]);
-        }
-      }
       return res.status(201).send({
         message: "Schedule créé avec succès",
-        data: {},
+        data: result,
       });
-    }
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send({ message: "Erreur lors de la création du type", error: err });
@@ -90,35 +73,35 @@ const updateOne = async (req, res) => {
     const { id } = req.params;
     const { date, shift, idType, idPerson } = req.body;
 
-    if (Validaion.isEmptyOrNull(id)) return res.status(422).json({ error: "Params invalide!" });
+    if (Validation.isEmptyOrNull(id)) return res.status(422).json({ error: "Params invalide!" });
 
     let updates = {};
     let select = {};
     let selectedValues = [];
     let values = [];
 
-    if (Validaion.isDate(date)) {
+    if (Validation.isDate(date)) {
       updates = { ...updates, date: new Date(date) };
       select = { ...select, "schedule.date": new Date(date).toISOString() };
       selectedValues = [...selectedValues, new Date(date).toISOString()];
       values = [...values, new Date(date)];
     }
 
-    if (Validaion.isTimeOfDay(shift)) {
+    if (Validation.isTimeOfDay(shift)) {
       updates = { ...updates, shift: shift };
       select = { ...select, "schedule.shift": shift };
       selectedValues = [...selectedValues, shift];
       values = [...values, updates.shift];
     }
 
-    if (!Validaion.isEmptyOrNull(idPerson)) {
+    if (!Validation.isEmptyOrNull(idPerson)) {
       updates = { ...updates, person_id: idPerson };
       select = { ...select, "schedule.person_id": idPerson };
       selectedValues = [...selectedValues, idPerson];
       values = [...values, updates.person_id];
     }
 
-    if (!Validaion.isEmptyOrNull(idType)) {
+    if (!Validation.isEmptyOrNull(idType)) {
       updates = { ...updates, types_id: idType };
       select = { ...select, "schedule.types_id": idType };
       selectedValues = [...selectedValues, idType];
@@ -130,6 +113,17 @@ const updateOne = async (req, res) => {
     if (rows.length > 0) {
       return res.status(422).json({ message: "Impossible de mettre a jour le schedule" });
     }
+
+    const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
+      idPerson,
+      new Date(date).toISOString(),
+      new Date(date).toISOString(),
+    ]);
+
+    if (isOverlap.length > 0)
+      res.status(422).json({
+        message: "Impossible de creer un schedule pour une personne en congé",
+      });
 
     const [rowsSecond, fieldsSecond] = await dbPromise.query(Query.buildSelectQuery("schedule", "*", { "schedule.id": id }), [id]);
 
@@ -169,7 +163,7 @@ const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (Validaion.isEmptyOrNull(id)) return res.status(422).json({ message: "Params invalide!" });
+    if (Validation.isEmptyOrNull(id)) return res.status(422).json({ message: "Params invalide!" });
 
     db.query(Query.buildDeleteQuery("schedule", { id: id }), [id], (err, result) => {
       if (err)
@@ -213,7 +207,7 @@ const copyPaste = async (req, res) => {
   try {
     const { copyDate, pasteDate } = req.body;
 
-    if (!Validaion.isDate(copyDate[0]) && !Validaion.isDate(copyDate[1]) && !Validaion.isDate(pasteDate[0]) && !Validaion.isDate([1]))
+    if (!Validation.isDate(copyDate[0]) && !Validation.isDate(copyDate[1]) && !Validation.isDate(pasteDate[0]) && !Validation.isDate([1]))
       return res.status(422).json({ message: "Data not processable." });
 
     const [dataToCopy, fields] = await dbPromise.query(QuerySchedule.selectDataBetweenDatesQuery, [
@@ -230,7 +224,26 @@ const copyPaste = async (req, res) => {
 
     for (e in dateListToCopy) {
       for (i in dataToCopy) {
+        const [rows, fields] = await dbPromise.query(
+          Query.buildSelectQuery("schedule", "*", {
+            "schedule.date": null,
+            "schedule.person_id": null,
+            "schedule.shift": null,
+          }),
+          [new Date(dateListToPaste[e]).toISOString(), dataToCopy[i].idPerson, dataToCopy[i].shift]
+        );
+
+        if (rows.length > 0) continue;
+
         if (new Date(dataToCopy[i].date).toLocaleDateString() === new Date(dateListToCopy[e]).toLocaleDateString()) {
+          const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
+            dataToCopy[i].idPerson,
+            new Date(dateListToPaste[e]).toISOString(),
+            new Date(dateListToPaste[e]).toISOString(),
+          ]);
+
+          if (isOverlap.length > 0) continue;
+
           await dbPromise.query(query, [
             new Date(dateListToPaste[e]),
             dataToCopy[i].shift,
