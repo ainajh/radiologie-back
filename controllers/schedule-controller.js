@@ -64,7 +64,7 @@ const create = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).send({ message: "Erreur lors de la création du type", error: err });
+    return res.status(500).send({ message: "Erreur lors de la création du type", error: err });
   }
 };
 
@@ -121,7 +121,7 @@ const updateOne = async (req, res) => {
     ]);
 
     if (isOverlap.length > 0)
-      res.status(422).json({
+      return res.status(422).json({
         message: "Impossible de creer un schedule pour une personne en congé",
       });
 
