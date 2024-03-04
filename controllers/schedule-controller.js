@@ -233,7 +233,9 @@ const copyPaste = async (req, res) => {
           [new Date(dateListToPaste[e]).toISOString(), dataToCopy[i].idPerson, dataToCopy[i].shift]
         );
 
-        if (rows.length > 0) continue;
+        if (rows.length > 0) {
+          dataToCopy[i].typeOfSchedule = 1;
+        }
 
         if (new Date(dataToCopy[i].date).toLocaleDateString() === new Date(dateListToCopy[e]).toLocaleDateString()) {
           const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
@@ -242,7 +244,9 @@ const copyPaste = async (req, res) => {
             new Date(dateListToPaste[e]).toISOString(),
           ]);
 
-          if (isOverlap.length > 0) continue;
+          if (isOverlap.length > 0) {
+            dataToCopy[i].typeOfSchedule = 1;
+          }
 
           await dbPromise.query(query, [
             new Date(dateListToPaste[e]),
@@ -255,7 +259,7 @@ const copyPaste = async (req, res) => {
       }
     }
 
-    return res.status(200).json({ data: dataToCopy, message: "Schedule updated successfully! " });
+    return res.status(200).json({ data: dataToCopy, message: "Schedule copied successfully! " });
   } catch (e) {
     return res.status(500).json({ message: "Error on copyPate! " });
   }

@@ -308,7 +308,7 @@ INSERT INTO `users` (`id`, `nom`, `tel`, `adresse`, `email`, `password`, `rpps`,
 CREATE TABLE `schedule` (
   id int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
   date DATE Not NULL,
-  shift VARCHAR(10) NOT NULL CHECK (shift in ('Morning', 'Afternoon', 'Evening', 'Night')), 
+  shift VARCHAR(10) NOT NULL CHECK (shift in ('Morning', 'Afternoon', 'Noon','Evening', 'Night')), 
   types_id int(11) NOT NULL REFERENCES  types(id) ON  DELETE CASCADE, 
   person_id int(11) NOT NULL REFERENCES users(id), 
   type_of_schedule int(11) NOT NULL DEFAULT 0, 
