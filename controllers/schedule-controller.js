@@ -4,6 +4,7 @@ const Validation = require("../utils/validations");
 const DateUtils = require("../utils/get-list-date-between");
 const Query = require("../utils/build-query");
 const QuerySchedule = require("../utils/build-schedule-select-query");
+const { v4: uuidv4 } = require("uuid");
 
 const create = async (req, res) => {
   try {
@@ -215,15 +216,19 @@ const copyPaste = async (req, res) => {
       new Date(copyDate[1]).toISOString(),
     ]);
 
-    const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule"];
+    const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule", "copied_id"];
 
     const query = Query.buildInsertQuery("schedule", columns);
 
     const dateListToCopy = DateUtils.getDates(copyDate[0], copyDate[1]);
     const dateListToPaste = DateUtils.getDates(pasteDate[0], pasteDate[1]);
 
+    const copiedId = uuidv4();
+
     for (e in dateListToCopy) {
       for (i in dataToCopy) {
+        dataToCopy[i].typeOfSchedule = 0;
+
         const [rows, fields] = await dbPromise.query(
           Query.buildSelectQuery("schedule", "*", {
             "schedule.date": null,
@@ -254,14 +259,37 @@ const copyPaste = async (req, res) => {
             dataToCopy[i].idType,
             dataToCopy[i].idPerson,
             dataToCopy[i].typeOfSchedule,
+            copiedId,
           ]);
         }
       }
     }
 
-    return res.status(200).json({ data: dataToCopy, message: "Schedule copied successfully! " });
+    return res.status(200).json({ data: { copiedId }, message: "Schedule copied successfully! " });
   } catch (e) {
+    console.log(e);
     return res.status(500).json({ message: "Error on copyPate! " });
+  }
+};
+
+const undoCopyPaste = (req, res) => {
+  const { copiedId } = req.params;
+  if (Validation.isEmptyOrNull(copiedId)) return res.status(422).json({ message: "Params invalide!" });
+
+  const undoQuery = `DELETE FROM schedule WHERE  copied_id = ?`;
+
+  try {
+    db.query(undoQuery, [copiedId], (err, result) => {
+      if (err)
+        return res.status(500).json({
+          message: "Error when undo change",
+          error: err,
+        });
+
+      res.status(200).send({ message: "Undo change successfuly", data: result });
+    });
+  } catch (e) {
+    return res.status(500).json({ message: "Error on undo copyPate! " });
   }
 };
 
@@ -271,4 +299,5 @@ module.exports = {
   deleteOne,
   getAll,
   copyPaste,
+  undoCopyPaste,
 };
