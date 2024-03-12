@@ -141,6 +141,9 @@ const updateOne = async (req, res) => {
       }
     }
 
+    updates = { ...updates, type_of_schedule: 0 };
+    values = [...values, updates.type_of_schedule];
+
     const query = Query.buildUpdateQuery("schedule", updates, { id: id });
     values = [...values, id];
 

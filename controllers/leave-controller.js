@@ -88,7 +88,7 @@ const getOne = async (req, res) => {
 const getAll = async (req, res) => {
   try {
     db.query(
-      "SELECT id, person_id as idPerson, type_of_leave as typeOfLeave, date_start as dateStart, date_end as dateEnd  FROM `leave` ",
+      "SELECT lv.id, lv.person_id AS idPerson, us.nom AS nom, lv.type_of_leave AS typeOfLeave, lv.date_start AS dateStart, lv.date_end AS dateEnd FROM `leave` AS lv INNER JOIN users AS us ON lv.person_id = us.id ",
       (err, results) => {
         if (err) {
           console.error("Error fetching leave entries:", err);
@@ -175,8 +175,8 @@ const updateOne = async (req, res) => {
   if (isOverlap.length > 0) return res.status(422).json({ message: "Date overlap with existing leave entry" });
 
   db.query(
-    "UPDATE `leave` SET type_of_leave = ?, date_start = ?, date_end = ? WHERE id = ?",
-    [typeOfLeave, dateStart, dateEnd, leaveId],
+    "UPDATE `leave` SET type_of_leave = ?, person_id=?, date_start = ?, date_end = ? WHERE id = ?",
+    [typeOfLeave, idPerson, dateStart, dateEnd, leaveId],
     (err, result) => {
       if (err) {
         console.error("Error updating leave entry:", err);
@@ -188,7 +188,7 @@ const updateOne = async (req, res) => {
       } else {
         return res.status(200).json({ message: "Leave entry updated successfully" });
       }
-    }
+    } //
   );
 };
 
