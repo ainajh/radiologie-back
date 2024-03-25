@@ -63,10 +63,10 @@ const create = async (req, res) => {
 
 const updateOne = async (req, res) => {
   try {
-    const { id, nom, adresse, tel, rpps, role } = req.body;
+    const { id, nom, adresse, tel, rpps, role, email } = req.body;
     db.query(
-      "UPDATE users SET nom = ?, tel = ?, adresse = ?, rpps = ?, role = ? WHERE id = ?",
-      [nom, tel, adresse, rpps, role, id],
+      "UPDATE users SET nom = ?, tel = ?, adresse = ?, rpps = ?, role = ?, email = ? WHERE id = ?",
+      [nom, tel, adresse, rpps, role, email, id],
       (err, result) => {
         if (err) {
           console.log(err);
@@ -166,61 +166,50 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     // Vérification de l'utilisateur
-    db.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email],
-      async (err, rows) => {
-        if (err) {
+    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          error: "Erreur lors de la connexion de l'utilisateur",
+        });
+      }
+      if (rows.length === 0) {
+        return res.status(401).send({
+          error: "L'utilisateur n'existe pas",
+        });
+      }
+      const user = rows[0];
+      if (user.role !== role) {
+        return res.status(401).send({
+          error: "L'utilisateur n'a pas le bon rôle",
+        });
+      }
+      if (role === "medecin" && user.is_verified === 0) {
+        return res.status(401).send({
+          error: "L'utilisateur n'est pas encore vérifié",
+        });
+      }
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return res.status(401).send({
+          error: "Mot de passe incorrect",
+        });
+      }
+      delete user.password;
+      const token = jwt.sign({ id: user.id, date: Date.now() }, process.env.JWT_SECRET);
+      db.query("INSERT INTO tokens (id_user, token) VALUES (?, ?)", [user.id, token], (err1, result1) => {
+        if (err1) {
           return res.status(500).json({
             error: "Erreur lors de la connexion de l'utilisateur",
           });
         }
-        if (rows.length === 0) {
-          return res.status(401).send({
-            error: "L'utilisateur n'existe pas",
-          });
-        }
-        const user = rows[0];
-        if (user.role !== role) {
-          return res.status(401).send({
-            error: "L'utilisateur n'a pas le bon rôle",
-          });
-        }
-        if (role === "medecin" && user.is_verified === 0) {
-          return res.status(401).send({
-            error: "L'utilisateur n'est pas encore vérifié",
-          });
-        }
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-          return res.status(401).send({
-            error: "Mot de passe incorrect",
-          });
-        }
-        delete user.password;
-        const token = jwt.sign(
-          { id: user.id, date: Date.now() },
-          process.env.JWT_SECRET
-        );
-        db.query(
-          "INSERT INTO tokens (id_user, token) VALUES (?, ?)",
-          [user.id, token],
-          (err1, result1) => {
-            if (err1) {
-              return res.status(500).json({
-                error: "Erreur lors de la connexion de l'utilisateur",
-              });
-            }
-            // Envoi de la réponse
-            return res.send({
-              message: "Utilisateur connecté avec succès",
-              user,
-              token,
-            });
-          }
-        );
-      }
-    );
+        // Envoi de la réponse
+        return res.send({
+          message: "Utilisateur connecté avec succès",
+          user,
+          token,
+        });
+      });
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send({
@@ -267,22 +256,17 @@ const changePassword = async (req, res) => {
           res.status(500).send({ error: "Erreur de l'envoi de l'email" });
         }
       }
-      db.query(
-        "UPDATE users SET password = ? WHERE id = ?",
-        [hashedPassword, id],
-        (err1, result1) => {
-          if (err1) {
-            return res.status(500).json({
-              error:
-                "Erreur lors de la modification de mot de passe de l'utilisateur",
-            });
-          }
-          // Envoi de la réponse
-          return res.send({
-            message: "Modification de mot de passe avec succès",
+      db.query("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, id], (err1, result1) => {
+        if (err1) {
+          return res.status(500).json({
+            error: "Erreur lors de la modification de mot de passe de l'utilisateur",
           });
         }
-      );
+        // Envoi de la réponse
+        return res.send({
+          message: "Modification de mot de passe avec succès",
+        });
+      });
     });
   } catch (err) {
     console.log(err);
@@ -292,8 +276,7 @@ const changePassword = async (req, res) => {
   }
 };
 function generateRandomPassword(length) {
-  const charset =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
   let password = "";
 
   for (let i = 0; i < length; i++) {
@@ -311,33 +294,30 @@ const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Vérification de l'utilisateur
-    db.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email],
-      async (err, rows) => {
-        if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la connexion de l'utilisateur",
-          });
-        }
-        if (rows.length === 0) {
-          return res.status(401).send({
-            error: "L'utilisateur n'existe pas",
-          });
-        }
+    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          error: "Erreur lors de la connexion de l'utilisateur",
+        });
+      }
+      if (rows.length === 0) {
+        return res.status(401).send({
+          error: "L'utilisateur n'existe pas",
+        });
+      }
 
-        if (rows[0].role !== 'medecin') {
-          return res.status(401).send({
-            error: "Vous ne pouvez pas réinitialiser le mot de passe à cause du role que vous avez",
-          });
-        }
+      if (rows[0].role !== "medecin") {
+        return res.status(401).send({
+          error: "Vous ne pouvez pas réinitialiser le mot de passe à cause du role que vous avez",
+        });
+      }
 
-        try {
-          await transporter.sendMail({
-            from: process.env.SMTP_USER,
-            to: email,
-            subject: "Réinitialisation du mot de passe",
-            html: `
+      try {
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: email,
+          subject: "Réinitialisation du mot de passe",
+          html: `
               <p>Bonjour, ${rows[0].nom},</p>
               <p>Votre mot de passe a été réinitialisé avec succès. Voici votre nouveau mot de passe :  <strong>${newPassword}</strong></p>
               
@@ -345,30 +325,23 @@ const forgotPassword = async (req, res) => {
             <p style="color: #652191; font-size:20px">Radiologie91</p>
             <div><a href="${process.env.FRONT_URL}">${process.env.FRONT_URL}<a/></div>
             `,
-          });
-        } catch (error) {
-          console.log(error);
-          res.status(500).send({ error: "Erreur de l'envoi de l'email" });
-        }
-        db.query(
-          "UPDATE users SET password = ? WHERE id = ?",
-          [hashedPassword, rows[0].id],
-          (err1, result1) => {
-            if (err1) {
-              return res.status(500).json({
-                error:
-                  "Erreur lors de la modification de mot de passe de l'utilisateur",
-              });
-            }
-            // Envoi de la réponse
-            return res.send({
-              message:
-                "Réinitialisation de mot de passe avec succès,Veuillez consulter votre email",
-            });
-          }
-        );
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({ error: "Erreur de l'envoi de l'email" });
       }
-    );
+      db.query("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, rows[0].id], (err1, result1) => {
+        if (err1) {
+          return res.status(500).json({
+            error: "Erreur lors de la modification de mot de passe de l'utilisateur",
+          });
+        }
+        // Envoi de la réponse
+        return res.send({
+          message: "Réinitialisation de mot de passe avec succès,Veuillez consulter votre email",
+        });
+      });
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send({
@@ -404,23 +377,20 @@ const getAll = async (req, res) => {
 const getAllType = async (req, res) => {
   try {
     // Récupération des utilisateurs
-    db.query(
-      "SELECT * FROM users WHERE role = 'radiologue' OR role = 'admin' OR role = 'secretaire'",
-      (err, rows) => {
-        if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération des utilisateurs",
-          });
-        }
-        const users = rows.map((user) => {
-          delete user.password;
-          return user;
-        });
-        return res.send({
-          users,
+    db.query("SELECT * FROM users WHERE role = 'radiologue' OR role = 'admin' OR role = 'secretaire'", (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          error: "Erreur lors de la récupération des utilisateurs",
         });
       }
-    );
+      const users = rows.map((user) => {
+        delete user.password;
+        return user;
+      });
+      return res.send({
+        users,
+      });
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send({
@@ -456,32 +426,28 @@ const checkConnectedUser = async (req, res) => {
   try {
     const token = req.header("Authorization")?.split(" ")[1];
     // Récupération de l'utilisateur connecté
-    db.query(
-      "Select users.* From users, tokens Where users.id = tokens.id_user AND tokens.token = ?",
-      [token],
-      (err, rows) => {
-        if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération de l'utilisateur connecté",
-          });
-        }
-        if (rows.length === 0) {
-          return res.status(401).send({
-            error: "Utilisateur non connecté",
-          });
-        }
-
-        // Vérification du rôle
-        if (rows[0].role !== role) {
-          return res.status(401).send({
-            error: "L'utilisateur n'a pas le bon rôle",
-          });
-        }
-        return res.send({
-          user: rows[0],
+    db.query("Select users.* From users, tokens Where users.id = tokens.id_user AND tokens.token = ?", [token], (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          error: "Erreur lors de la récupération de l'utilisateur connecté",
         });
       }
-    );
+      if (rows.length === 0) {
+        return res.status(401).send({
+          error: "Utilisateur non connecté",
+        });
+      }
+
+      // Vérification du rôle
+      if (rows[0].role !== role) {
+        return res.status(401).send({
+          error: "L'utilisateur n'a pas le bon rôle",
+        });
+      }
+      return res.send({
+        user: rows[0],
+      });
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send({
