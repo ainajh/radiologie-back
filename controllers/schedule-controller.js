@@ -245,6 +245,15 @@ const copyPaste = async (req, res) => {
           dataToCopy[i].typeOfSchedule = 1;
         }
 
+        const date = new Date(dateListToPaste[e]);
+
+        // Get today's date
+        const today = new Date();
+
+        if (date < today) {
+          continue;
+        }
+
         if (new Date(dataToCopy[i].date).toLocaleDateString() === new Date(dateListToCopy[e]).toLocaleDateString()) {
           const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
             dataToCopy[i].idPerson,

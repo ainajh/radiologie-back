@@ -2,6 +2,7 @@ const db = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const transporter = require("../mailconfig");
+const Validation = require("../utils/validations");
 
 const create = async (req, res) => {
   try {
@@ -399,6 +400,34 @@ const getAllType = async (req, res) => {
   }
 };
 
+const getOnlyType = async (req, res) => {
+  try {
+    const { role } = req.params;
+
+    if (Validation.isEmptyOrNull(role)) return res.status(422).json({ message: "Champ invalide!" });
+
+    db.query("SELECT * FROM users WHERE role = ?", [role.trim()], (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          error: "Erreur lors de la récupération des utilisateurs",
+        });
+      }
+      const users = rows.map((user) => {
+        delete user.password;
+        return user;
+      });
+      return res.send({
+        users,
+      });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({
+      error: "Erreur lors de la récupération des utilisateurs",
+    });
+  }
+};
+
 const verifyMedecin = async (req, res) => {
   try {
     const { id } = req.body;
@@ -492,4 +521,5 @@ module.exports = {
   logout,
   changePassword,
   forgotPassword,
+  getOnlyType,
 };
