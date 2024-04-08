@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const create = async (req, res) => {
   try {
-    const { idPerson, shift, date, idType, typeOfSchedule, dateStart, dateEnd } = req.body;
+    const { idPerson, shift, date, message, idType, typeOfSchedule, dateStart, dateEnd } = req.body;
 
     if (
       Validation.isEmptyOrNull(idPerson) ||
@@ -47,11 +47,11 @@ const create = async (req, res) => {
         message: "Impossible de creer un schedule pour une personne en congé",
       });
 
-    const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule"];
+    const columns = ["date", "message", "shift", "types_id", "person_id", "type_of_schedule"];
 
     const query = Query.buildInsertQuery("schedule", columns);
 
-    db.query(query, [new Date(date), shift, idType, idPerson, typeOfSchedule], (err, result) => {
+    db.query(query, [new Date(date), message, shift, idType, idPerson, typeOfSchedule], (err, result) => {
       if (err)
         return res.status(500).json({
           message: "Erreur lors de la création du schedule",
@@ -72,7 +72,9 @@ const create = async (req, res) => {
 const updateOne = async (req, res) => {
   try {
     const { id } = req.params;
-    const { date, shift, idType, idPerson } = req.body;
+    const { date, shift, message, idType, idPerson } = req.body;
+
+    console.log("bod ", req.body);
 
     if (Validation.isEmptyOrNull(id)) return res.status(422).json({ message: "Params invalide!" });
 
@@ -80,6 +82,13 @@ const updateOne = async (req, res) => {
     let select = {};
     let selectedValues = [];
     let values = [];
+
+    if (!Validation.isEmptyOrNull(message)) {
+      updates = { ...updates, message: message };
+      select = { ...select, "schedule.message": message };
+      selectedValues = [...selectedValues, message];
+      values = [...values, message];
+    }
 
     if (Validation.isDate(date)) {
       updates = { ...updates, date: new Date(date) };
@@ -146,6 +155,7 @@ const updateOne = async (req, res) => {
 
     const query = Query.buildUpdateQuery("schedule", updates, { id: id });
     values = [...values, id];
+    console.log("query", query);
 
     db.query(query, values, (err, result) => {
       if (err) return res.status(500).json({ message: "Erreur lors de la modification!", error: err });
@@ -219,7 +229,7 @@ const copyPaste = async (req, res) => {
       new Date(copyDate[1]).toISOString(),
     ]);
 
-    const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule", "copied_id"];
+    const columns = ["date", "message", "shift", "types_id", "person_id", "type_of_schedule", "copied_id"];
 
     const query = Query.buildInsertQuery("schedule", columns);
 
@@ -267,6 +277,7 @@ const copyPaste = async (req, res) => {
 
           await dbPromise.query(query, [
             new Date(dateListToPaste[e]),
+            dataToCopy[i].message,
             dataToCopy[i].shift,
             dataToCopy[i].idType,
             dataToCopy[i].idPerson,
