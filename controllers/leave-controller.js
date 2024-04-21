@@ -103,6 +103,25 @@ const getAll = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const getMyLeave = async (req, res) => {
+  const { idUser } = req.params;
+  try {
+    db.query(
+      `SELECT lv.id, lv.person_id AS idPerson, us.nom AS nom, lv.type_of_leave AS typeOfLeave, lv.date_start AS dateStart, lv.date_end AS dateEnd FROM \`leave\` AS lv INNER JOIN users AS us ON lv.person_id = us.id WHERE us.id = ${idUser}`,
+      (err, results) => {
+        if (err) {
+          console.error("Error fetching leave entries:", err);
+          res.status(500).json({ message: "Internal Server Error" });
+          return;
+        }
+
+        return res.status(200).json({ data: results });
+      }
+    );
+  } catch (e) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 const getAllInTwoDate = async (req, res) => {
   const { dateStart, dateEnd } = req.body;
@@ -200,4 +219,5 @@ module.exports = {
   updateOne,
   isDisponible,
   getAllInTwoDate,
+  getMyLeave,
 };

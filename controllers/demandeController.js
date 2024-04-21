@@ -278,7 +278,7 @@ const sendCodeConfirmation = async (req, res) => {
 const getAll = async (req, res) => {
   try {
     db.query(
-      "SELECT CASE WHEN COUNT(commentaires.id) > 0 THEN JSON_ARRAYAGG(JSON_OBJECT('id', commentaires.id, 'content', commentaires.content, 'created', commentaires.created)) ELSE JSON_ARRAY() END AS comments, demandes.id, COALESCE(users.role, NULL) AS role_user, demandes.nom_patient, demandes.email AS email, demandes.datenais, demandes.ordonnance, demandes.tel, demandes.created_at, demandes.rdv, COALESCE(users.nom, NULL) AS nom_medecin, types.nom_type, types.nom_sous_type, demandes.lieu,demandes.date_rdv FROM demandes INNER JOIN types ON demandes.id_type = types.id LEFT JOIN users ON demandes.id_medecin = users.id LEFT JOIN commentaires ON demandes.id = commentaires.id_demande GROUP BY demandes.id ORDER BY created_at DESC",
+      "SELECT CONCAT( '[', GROUP_CONCAT( JSON_OBJECT('id', commentaires.id, 'content', commentaires.content, 'created', commentaires.created) SEPARATOR ',' ), ']' ) AS comments, demandes.id, COALESCE(users.role, NULL) AS role_user, demandes.nom_patient, demandes.email AS email, demandes.datenais, demandes.ordonnance, demandes.tel, demandes.created_at, demandes.rdv, COALESCE(users.nom, NULL) AS nom_medecin, types.nom_type, types.nom_sous_type, demandes.lieu, demandes.date_rdv FROM demandes INNER JOIN types ON demandes.id_type = types.id LEFT JOIN users ON demandes.id_medecin = users.id LEFT JOIN commentaires ON demandes.id = commentaires.id_demande GROUP BY demandes.id ORDER BY demandes.created_at DESC",
       (err, result) => {
         if (err) {
           console.log(err);
