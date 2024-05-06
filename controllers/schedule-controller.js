@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const create = async (req, res) => {
   try {
-    const { idPerson, shift, date, idType, typeOfSchedule, dateStart, dateEnd } = req.body;
+    const { idPerson, shift, date, message, idType, typeOfSchedule, dateStart, dateEnd } = req.body;
 
     if (
       Validation.isEmptyOrNull(idPerson) ||
@@ -47,11 +47,11 @@ const create = async (req, res) => {
         message: "Impossible de creer un schedule pour une personne en congé",
       });
 
-    const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule"];
+    const columns = ["date", "message", "shift", "types_id", "person_id", "type_of_schedule"];
 
     const query = Query.buildInsertQuery("schedule", columns);
 
-    db.query(query, [new Date(date), shift, idType, idPerson, typeOfSchedule], (err, result) => {
+    db.query(query, [new Date(date), message, shift, idType, idPerson, typeOfSchedule], (err, result) => {
       if (err)
         return res.status(500).json({
           message: "Erreur lors de la création du schedule",
@@ -72,7 +72,9 @@ const create = async (req, res) => {
 const updateOne = async (req, res) => {
   try {
     const { id } = req.params;
-    const { date, shift, idType, idPerson } = req.body;
+    const { date, shift, message, idType, idPerson, is_valid } = req.body;
+
+    console.log("bod ", req.body);
 
     if (Validation.isEmptyOrNull(id)) return res.status(422).json({ message: "Params invalide!" });
 
@@ -80,6 +82,13 @@ const updateOne = async (req, res) => {
     let select = {};
     let selectedValues = [];
     let values = [];
+
+    if (!Validation.isEmptyOrNull(message)) {
+      updates = { ...updates, message: message };
+      select = { ...select, "schedule.message": message };
+      selectedValues = [...selectedValues, message];
+      values = [...values, message];
+    }
 
     if (Validation.isDate(date)) {
       updates = { ...updates, date: new Date(date) };
@@ -141,11 +150,12 @@ const updateOne = async (req, res) => {
       }
     }
 
-    updates = { ...updates, type_of_schedule: 0 };
-    values = [...values, updates.type_of_schedule];
+    updates = { ...updates, type_of_schedule: 0, is_valid };
+    values = [...values, updates.type_of_schedule, is_valid];
 
     const query = Query.buildUpdateQuery("schedule", updates, { id: id });
     values = [...values, id];
+    console.log("query", query);
 
     db.query(query, values, (err, result) => {
       if (err) return res.status(500).json({ message: "Erreur lors de la modification!", error: err });
@@ -162,7 +172,66 @@ const updateOne = async (req, res) => {
     });
   }
 };
+const getAllSheduleThisWeek = async (req, res) => {
+  const datesInSQLFormat = req.body?.map((date) => `'${date}'`).join(", ");
+  try {
+    db.query(`SELECT id ,is_valid  FROM schedule  WHERE DATE(date) IN (${datesInSQLFormat})`, (err, rows) => {
+      if (err) {
+        console.log();
+        return res.status(500).json({
+          error: "Erreur lors de la récupération des types",
+        });
+      }
+      res.send({
+        schedule: rows,
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      error: "Erreur lors de la récupération des types",
+    });
+  }
+};
 
+const toogleValidationPlanning = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { validate } = req.query;
+
+    if (id == null) {
+      return res.status(400).json({
+        error: "Champ invalide!",
+      });
+    }
+    db.query("UPDATE schedule SET is_valid = ? WHERE id = ?", [validate == "true" ? 1 : 0, id], async (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          error: "Erreur lors de la modification!",
+        });
+      }
+
+      db.query("SELECT * FROM schedule WHERE id = ?", [id], (err, rows) => {
+        if (err) {
+          return res.status(500).json({
+            error: "Erreur lors de la récupération du planning",
+          });
+        }
+
+        return res.send({
+          message: "Modification efféctuée",
+          data: rows,
+        });
+      });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({
+      error: "Erreur lors de la modification du Type",
+    });
+  }
+};
 const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
@@ -219,7 +288,7 @@ const copyPaste = async (req, res) => {
       new Date(copyDate[1]).toISOString(),
     ]);
 
-    const columns = ["date", "shift", "types_id", "person_id", "type_of_schedule", "copied_id"];
+    const columns = ["date", "message", "shift", "types_id", "person_id", "type_of_schedule", "copied_id"];
 
     const query = Query.buildInsertQuery("schedule", columns);
 
@@ -245,6 +314,15 @@ const copyPaste = async (req, res) => {
           dataToCopy[i].typeOfSchedule = 1;
         }
 
+        const date = new Date(dateListToPaste[e]);
+
+        // Get today's date
+        const today = new Date();
+
+        if (date < today) {
+          continue;
+        }
+
         if (new Date(dataToCopy[i].date).toLocaleDateString() === new Date(dateListToCopy[e]).toLocaleDateString()) {
           const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
             dataToCopy[i].idPerson,
@@ -258,6 +336,7 @@ const copyPaste = async (req, res) => {
 
           await dbPromise.query(query, [
             new Date(dateListToPaste[e]),
+            dataToCopy[i].message,
             dataToCopy[i].shift,
             dataToCopy[i].idType,
             dataToCopy[i].idPerson,
@@ -303,4 +382,6 @@ module.exports = {
   getAll,
   copyPaste,
   undoCopyPaste,
+  toogleValidationPlanning,
+  getAllSheduleThisWeek,
 };

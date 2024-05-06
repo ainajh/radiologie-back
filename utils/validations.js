@@ -10,7 +10,7 @@ const isDate = (date) => {
 };
 
 const isTimeOfDay = (input) => {
-  const regex = /^(Morning|Afternoon|Noon|Evening|Night)$/i;
+  const regex = /^(Matin|Après-midi|Midi|Soir|Nuit)$/i;
   return regex.test(input);
 };
 

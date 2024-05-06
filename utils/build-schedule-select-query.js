@@ -1,6 +1,6 @@
 const buildScheduleQuery = (condition) => {
   let query = `
-        SELECT s.id, s.date, s.shift, s.person_id as idPerson, s.types_id AS idType, s.type_of_schedule AS typeOfSchedule, u.nom , u.email,
+        SELECT s.id, s.date,s.message, s.shift, s.is_valid as is_valid , s.person_id as idPerson, s.types_id AS idType, s.type_of_schedule AS typeOfSchedule, u.nom , u.email,
          t.nom_type AS typeLabel, t.nom_sous_type AS subTypeLabel  FROM schedule s
         LEFT JOIN users u ON s.person_id = u.id
         LEFT JOIN types t ON s.types_id = t.id`;
@@ -17,7 +17,7 @@ const buildScheduleQuery = (condition) => {
 };
 
 const selectDataBetweenDatesQuery = `
-        SELECT s.id, s.date, s.shift, s.person_id as idPerson, s.types_id AS idType, s.type_of_schedule AS typeOfSchedule
+        SELECT s.id, s.date, s.message, s.shift, s.person_id as idPerson, s.types_id AS idType, s.type_of_schedule AS typeOfSchedule
         FROM schedule s
         WHERE s.date BETWEEN ? AND ?;
       `;

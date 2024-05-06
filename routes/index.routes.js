@@ -7,8 +7,10 @@ router
   .use("/user", require("./user.routes"))
   .use("/demande", require("./demande.routes"))
   .use("/type", require("./type.routes"))
+  .use("/place", require("./place.routes"))
   .use("/schedule", require("./schedule.routes"))
   .use("/leave", require("./leave.routes"))
+  .use("/comment", require("./comment.routes"))
   .get("/message/getmessagenonlu", async (req, res) => {
     const { id } = req.query;
     try {

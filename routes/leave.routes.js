@@ -3,6 +3,7 @@ const leaveController = require("../controllers/leave-controller");
 
 router
   .get("/", leaveController.getAll)
+  .get("/:idUser", leaveController.getMyLeave)
   .get("/leaveOfPerson/:personId", leaveController.getOne)
   .post("/add", leaveController.create)
   .post("/", leaveController.getAllInTwoDate)
