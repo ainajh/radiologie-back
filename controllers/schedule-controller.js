@@ -72,7 +72,7 @@ const create = async (req, res) => {
 const updateOne = async (req, res) => {
   try {
     const { id } = req.params;
-    const { date, shift, message, idType, idPerson } = req.body;
+    const { date, shift, message, idType, idPerson, is_valid } = req.body;
 
     console.log("bod ", req.body);
 
@@ -150,8 +150,8 @@ const updateOne = async (req, res) => {
       }
     }
 
-    updates = { ...updates, type_of_schedule: 0 };
-    values = [...values, updates.type_of_schedule];
+    updates = { ...updates, type_of_schedule: 0, is_valid };
+    values = [...values, updates.type_of_schedule, is_valid];
 
     const query = Query.buildUpdateQuery("schedule", updates, { id: id });
     values = [...values, id];
@@ -172,7 +172,66 @@ const updateOne = async (req, res) => {
     });
   }
 };
+const getAllSheduleThisWeek = async (req, res) => {
+  const datesInSQLFormat = req.body?.map((date) => `'${date}'`).join(", ");
+  try {
+    db.query(`SELECT id ,is_valid  FROM schedule  WHERE DATE(date) IN (${datesInSQLFormat})`, (err, rows) => {
+      if (err) {
+        console.log();
+        return res.status(500).json({
+          error: "Erreur lors de la récupération des types",
+        });
+      }
+      res.send({
+        schedule: rows,
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      error: "Erreur lors de la récupération des types",
+    });
+  }
+};
 
+const toogleValidationPlanning = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { validate } = req.query;
+
+    if (id == null) {
+      return res.status(400).json({
+        error: "Champ invalide!",
+      });
+    }
+    db.query("UPDATE schedule SET is_valid = ? WHERE id = ?", [validate == "true" ? 1 : 0, id], async (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          error: "Erreur lors de la modification!",
+        });
+      }
+
+      db.query("SELECT * FROM schedule WHERE id = ?", [id], (err, rows) => {
+        if (err) {
+          return res.status(500).json({
+            error: "Erreur lors de la récupération du planning",
+          });
+        }
+
+        return res.send({
+          message: "Modification efféctuée",
+          data: rows,
+        });
+      });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({
+      error: "Erreur lors de la modification du Type",
+    });
+  }
+};
 const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
@@ -323,4 +382,6 @@ module.exports = {
   getAll,
   copyPaste,
   undoCopyPaste,
+  toogleValidationPlanning,
+  getAllSheduleThisWeek,
 };
