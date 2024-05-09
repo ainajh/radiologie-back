@@ -78,6 +78,7 @@ const getAll = async (req, res) => {
   try {
     db.query("SELECT * FROM places", (err, rows) => {
       if (err) {
+        console.log(err);
         return res.status(500).json({
           error: "Erreur lors de la récupération des places",
         });
