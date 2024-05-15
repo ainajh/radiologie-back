@@ -9,9 +9,7 @@ const checkToken = (role) => async (req, res, next) => {
     }
     const authorization = req.headers.authorization.split(" ");
     const token = authorization[1];
-    db.query("SELECT * FROM users, tokens WHERE users.id = tokens.id_user AND token = ?", [
-      token,
-    ], (err, results) => {
+    db.query("SELECT * FROM users, tokens WHERE users.id = tokens.id_user AND token = ?", [token], (err, results) => {
       if (err) {
         return res.status(500).json({
           error: "Erreur lors de la récupération de l'utilisateur connecté",
@@ -22,12 +20,13 @@ const checkToken = (role) => async (req, res, next) => {
           error: "Token invalide",
         });
       }
-  
-      if(!role.includes(results[0].role)) {
+
+      if (!role.includes(results[0].role)) {
         return res.status(401).json({
           error: "Vous n'êtes pas autorisé à accéder à cette ressource",
         });
       }
+      res.locals.userInfo = results[0];
       next();
     });
   } catch (err) {
