@@ -11,6 +11,7 @@ router
   .use("/schedule", require("./schedule.routes"))
   .use("/leave", require("./leave.routes"))
   .use("/comment", require("./comment.routes"))
+  .use("/modif-week", require("./modifWeek.routes"))
   .get("/message/getmessagenonlu", async (req, res) => {
     const { id } = req.query;
     try {

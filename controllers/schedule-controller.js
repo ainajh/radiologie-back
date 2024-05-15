@@ -288,7 +288,15 @@ const copyPaste = async (req, res) => {
       new Date(copyDate[1]).toISOString(),
     ]);
 
-    const columns = ["date", "message", "shift", "types_id", "person_id", "type_of_schedule", "copied_id"];
+    const columns = [
+      "date",
+      // "message",
+      "shift",
+      "types_id",
+      "person_id",
+      "type_of_schedule",
+      "copied_id",
+    ];
 
     const query = Query.buildInsertQuery("schedule", columns);
 
@@ -336,7 +344,7 @@ const copyPaste = async (req, res) => {
 
           await dbPromise.query(query, [
             new Date(dateListToPaste[e]),
-            dataToCopy[i].message,
+            // dataToCopy[i].message,
             dataToCopy[i].shift,
             dataToCopy[i].idType,
             dataToCopy[i].idPerson,
