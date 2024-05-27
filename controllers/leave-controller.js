@@ -24,7 +24,7 @@ const create = async (req, res) => {
       new Date(dateStart).toISOString(),
     ]);
 
-    if (isOverlap.length > 0) return res.status(422).json({ message: "Date overlap with existing leave entry" });
+    if (isOverlap.length > 0) return res.status(422).json({ message: "Chevauchement de dates avec une entrée de congé existante" });
 
     const columns = ["type_of_leave", "person_id", "date_start", "date_end"];
 
@@ -33,8 +33,8 @@ const create = async (req, res) => {
     const values = [typeOfLeave, parseInt(idPerson), new Date(dateStart), new Date(dateEnd)];
 
     db.query(query, values, (err, result) => {
-      if (err) return res.status(500).json({ message: "Erreur lors de la création de leave", error: err });
-      return res.status(201).send({ message: "Leave créé avec succès", data: result });
+      if (err) return res.status(500).json({ message: "Erreur lors de la création du congé", error: err });
+      return res.status(201).send({ message: "Congés crées  avec succès", data: result });
     });
   } catch (e) {
     return res.status(500).json({ message: "Internal Server Error" });
@@ -159,9 +159,9 @@ const deleteOne = async (req, res) => {
       }
 
       if (result.affectedRows === 0) {
-        return res.status(422).json({ message: "Leave entry not found" });
+        return res.status(422).json({ message: "Congé non trouvé" });
       } else {
-        return res.status(200).json({ message: "Leave entry deleted successfully" });
+        return res.status(200).json({ message: "Suppression du congé avec succès" });
       }
     });
   } catch (e) {
@@ -191,7 +191,7 @@ const updateOne = async (req, res) => {
     new Date(dateStart).toISOString(),
   ]);
 
-  if (isOverlap.length > 0) return res.status(422).json({ message: "Date overlap with existing leave entry" });
+  if (isOverlap.length > 0) return res.status(422).json({ message: "Chevauchement de dates avec une entrée de congé existante" });
 
   db.query(
     "UPDATE `leave` SET type_of_leave = ?, person_id=?, date_start = ?, date_end = ? WHERE id = ?",
@@ -203,9 +203,9 @@ const updateOne = async (req, res) => {
       }
 
       if (result.affectedRows === 0) {
-        return res.status(422).json({ message: "Leave entry not found" });
+        return res.status(422).json({ message: "Congé non trouvé" });
       } else {
-        return res.status(200).json({ message: "Leave entry updated successfully" });
+        return res.status(200).json({ message: "Modification du congé avec succès" });
       }
     } //
   );
