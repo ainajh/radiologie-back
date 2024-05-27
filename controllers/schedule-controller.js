@@ -32,7 +32,7 @@ const create = async (req, res) => {
 
     if (rows.length > 0) {
       return res.status(422).json({
-        message: "Impossible de creer un schedule pour une meme personne sur meme date and dataTime",
+        message: "Impossible de modifier le planning car le médecin est déjà programmé sur le même créneau horaire ",
       });
     }
 
@@ -44,7 +44,7 @@ const create = async (req, res) => {
 
     if (isOverlap.length > 0)
       return res.status(422).json({
-        message: "Impossible de creer un schedule pour une personne en congé",
+        message: "Impossible de modifier le planning car le médecin est en congé ",
       });
 
     const columns = ["date", "message", "shift", "types_id", "person_id", "type_of_schedule"];
@@ -121,7 +121,7 @@ const updateOne = async (req, res) => {
     const [rows, fields] = await dbPromise.query(Query.buildSelectQuery("schedule", "*", select), values);
 
     if (rows.length > 0) {
-      return res.status(422).json({ message: "Impossible de mettre a jour le schedule" });
+      return res.status(422).json({ message: "Impossible de mettre a jour le planning" });
     }
 
     const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
@@ -132,13 +132,13 @@ const updateOne = async (req, res) => {
 
     if (isOverlap.length > 0)
       return res.status(422).json({
-        message: "Impossible de creer un schedule pour une personne en congé",
+        message: "Impossible de modifier le planning car le médecin est en congé ",
       });
 
     const [rowsSecond, fieldsSecond] = await dbPromise.query(Query.buildSelectQuery("schedule", "*", { "schedule.id": id }), [id]);
 
     if (rowsSecond.length === 0) {
-      return res.status(422).json({ message: "Impossible de mettre a jour le schedule" });
+      return res.status(422).json({ message: "Impossible de mettre a jour le planning" });
     }
 
     if (new Date(rowsSecond[0].date).toLocaleDateString() != updates.date.toLocaleDateString() || rowsSecond[0].shift != updates.shift) {
@@ -146,7 +146,7 @@ const updateOne = async (req, res) => {
       selectedValues.pop();
       const [rowsFird, fieldsFird] = await dbPromise.query(Query.buildSelectQuery("schedule", "*", select), selectedValues);
       if (rowsFird.length > 0) {
-        return res.status(422).json({ message: "Impossible de mettre a jour le schedule" });
+        return res.status(422).json({ message: "Impossible de mettre a jour le planning" });
       }
     }
 
@@ -320,6 +320,7 @@ const copyPaste = async (req, res) => {
 
         if (rows.length > 0) {
           dataToCopy[i].typeOfSchedule = 1;
+          console.log(dataToCopy[i]);
         }
 
         const date = new Date(dateListToPaste[e]);

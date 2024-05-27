@@ -2,16 +2,24 @@ const db = require("../db");
 const transporter = require("../mailconfig");
 const { format } = require("date-fns");
 
+const dayjs = require("dayjs");
+require("dayjs/locale/fr");
+dayjs.locale("fr");
+
+const formatDateToString = (date) => {
+  const dates = dayjs(date);
+  return dates.format("DD MMMM YYYY");
+};
 const formatSemaine = (semaine) => {
   const startDate = new Date(semaine[0]);
   const endDate = new Date(semaine[1]);
 
   // Formater les dates
-  const formattedStartDate = format(startDate, "dd MMMM yyyy");
-  const formattedEndDate = format(endDate, "dd MMMM yyyy");
+  const formattedStartDate = formatDateToString(startDate);
+  const formattedEndDate = formatDateToString(endDate);
 
   // Concaténer les dates formatées
-  return `${formattedStartDate} jusqu'à ${formattedEndDate}`;
+  return `${formattedStartDate} au ${formattedEndDate}`;
 };
 
 const create = async (req, res) => {
@@ -40,9 +48,9 @@ const create = async (req, res) => {
             subject: "Modification planning",
             html: `
                   <p>Madame, Monsieur, </p>
-                  <p><strong>${ress[0]?.nom}</strong> à <strong style="color: ${valide ? "green" : "red"}">${
-              valide ? "valider" : "dévalider"
-            }</strong> tous les planning (${nbPlanning} planning) de la semaine de <strong>${semainFormated}</strong> </p>
+                  <p><strong style="color: red">Attention </strong><strong>${ress[0]?.nom}</strong> à <strong style="color: ${
+              valide ? "green" : "red"
+            }">${valide ? "validé" : "dévalidé"}</strong> le planning  de la semaine du <strong style="text-decoration: underline;">${semainFormated}</strong> </p>
                   <p>Bonne journée </p>
                   <p style="color: #652191; font-size:20px">Centres d'Imagerie Médicale </p>
                   <p style="color: #652191; font-size:20px">Radiologie91</p>
