@@ -2,13 +2,19 @@ const db = require("../db");
 
 const create = async (req, res) => {
   try {
-    const { id_sender, comment } = req.body;
+    const { id_sender, comment, date } = req.body;
     if (id_sender == null || comment == null) {
       return res.status(400).json({
         error: "Champ invalide!",
       });
     }
-    db.query("INSERT INTO commentaire_schedule (id_sender, comment) VALUES (?, ?)", [id_sender, comment], (err, result) => {
+    let query;
+    if (date) {
+      query = "INSERT INTO commentaire_schedule (id_sender, comment, date) VALUES (?, ? , ?)";
+    } else {
+      query = "INSERT INTO commentaire_schedule (id_sender, comment) VALUES (?, ?)";
+    }
+    db.query(query, date ? [id_sender, comment, date] : [id_sender, comment], (err, result) => {
       if (err) {
         return res.status(500).json({
           error: "Erreur lors de la création du commentaire",
@@ -78,7 +84,7 @@ const getAll = async (req, res) => {
   const datesInSQLFormat = req.body?.map((date) => `'${date}'`).join(", ");
   try {
     db.query(
-      `SELECT *, cs.id as idCom FROM commentaire_schedule cs INNER JOIN users us on cs.id_sender = us.id  WHERE DATE(created_at) IN (${datesInSQLFormat}) ORDER BY cs.created_at ASC`,
+      `SELECT *, cs.id as idCom FROM commentaire_schedule cs INNER JOIN users us on cs.id_sender = us.id  WHERE DATE(date) IN (${datesInSQLFormat}) ORDER BY cs.date ASC`,
       (err, rows) => {
         if (err) {
           return res.status(500).json({
@@ -148,7 +154,7 @@ const updateOne = async (req, res) => {
   try {
     const { comment } = req.body;
     const { id } = req.params;
-    if (id == null || comment == null || id == "" || comment == "") {
+    if (id == null || id == "") {
       return res.status(400).json({
         error: "Champ invalide!",
       });

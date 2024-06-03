@@ -191,7 +191,7 @@ const updateOne = async (req, res) => {
     new Date(dateStart).toISOString(),
   ]);
 
-  if (isOverlap.length > 0) return res.status(422).json({ message: "Chevauchement de dates avec une entrée de congé existante" });
+  // if (isOverlap.length > 0) return res.status(422).json({ message: "Chevauchement de dates avec une entrée de congé existante" });
 
   db.query(
     "UPDATE `leave` SET type_of_leave = ?, person_id=?, date_start = ?, date_end = ? WHERE id = ?",

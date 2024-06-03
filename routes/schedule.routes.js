@@ -5,6 +5,7 @@ const commentaire = require("../controllers/commentSchedule.controller");
 router
   .get("/", scheduleController.getAll)
   .post("/getAllSheduleThisWeek", scheduleController.getAllSheduleThisWeek)
+  .post("/deleteAllSheduleThisWeek", scheduleController.deleteAllSheduleThisWeek)
   .get("/undoCopyPaste/:copiedId", scheduleController.undoCopyPaste)
   .post("/add", scheduleController.create)
   .put("/toogleValidationPlanning/:id", scheduleController.toogleValidationPlanning)
