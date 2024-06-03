@@ -83,7 +83,7 @@ const updateOne = async (req, res) => {
     let selectedValues = [];
     let values = [];
 
-    if (!Validation.isEmptyOrNull(message)) {
+    if (message !== null) {
       updates = { ...updates, message: message };
       select = { ...select, "schedule.message": message };
       selectedValues = [...selectedValues, message];
@@ -124,6 +124,21 @@ const updateOne = async (req, res) => {
       return res.status(422).json({ message: "Impossible de mettre a jour le planning" });
     }
 
+    // const [rowas, fieldas] = await dbPromise.query(
+    //   Query.buildSelectQuery("schedule", "*", {
+    //     "schedule.date": null,
+    //     "schedule.person_id": null,
+    //     "schedule.shift": null,
+    //   }),
+    //   [new Date(date).toISOString(), idPerson, shift]
+    // );
+
+    // if (rowas.length > 0) {
+    //   return res.status(422).json({
+    //     message: "Impossible de modifier le planning car le médecin est déjà programmé sur le même créneau horaire ",
+    //   });
+    // }
+
     const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckDisponibility(), [
       idPerson,
       new Date(date).toISOString(),
@@ -152,10 +167,18 @@ const updateOne = async (req, res) => {
 
     updates = { ...updates, type_of_schedule: 0, is_valid };
     values = [...values, updates.type_of_schedule, is_valid];
+    values = [...values, id];
+
+    if (!message) {
+      delete updates.message;
+      delete updates.is_valid;
+      values = values.filter((item) => item !== undefined);
+
+      console.log("updates: ", updates);
+      console.log("values: ", values);
+    }
 
     const query = Query.buildUpdateQuery("schedule", updates, { id: id });
-    values = [...values, id];
-    console.log("query", query);
 
     db.query(query, values, (err, result) => {
       if (err) return res.status(500).json({ message: "Erreur lors de la modification!", error: err });
@@ -175,7 +198,7 @@ const updateOne = async (req, res) => {
 const getAllSheduleThisWeek = async (req, res) => {
   const datesInSQLFormat = req.body?.map((date) => `'${date}'`).join(", ");
   try {
-    db.query(`SELECT id ,is_valid  FROM schedule  WHERE DATE(date) IN (${datesInSQLFormat})`, (err, rows) => {
+    db.query(`SELECT *  FROM schedule  WHERE DATE(date) IN (${datesInSQLFormat})`, (err, rows) => {
       if (err) {
         console.log();
         return res.status(500).json({
@@ -190,6 +213,27 @@ const getAllSheduleThisWeek = async (req, res) => {
     console.log(error);
     res.status(500).send({
       error: "Erreur lors de la récupération des types",
+    });
+  }
+};
+const deleteAllSheduleThisWeek = async (req, res) => {
+  const datesInSQLFormat = req.body?.map((date) => `'${date}'`).join(", ");
+  try {
+    db.query(`DELETE FROM schedule WHERE DATE(date) IN (${datesInSQLFormat})`, (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          error: "Erreur lors de la suppression des enregistrements",
+        });
+      }
+      res.send({
+        message: `${result.affectedRows} enregistrement(s) supprimé(s) avec succès.`,
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      error: "Erreur lors de la suppression des enregistrements",
     });
   }
 };
@@ -393,4 +437,5 @@ module.exports = {
   undoCopyPaste,
   toogleValidationPlanning,
   getAllSheduleThisWeek,
+  deleteAllSheduleThisWeek,
 };
