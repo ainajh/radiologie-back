@@ -76,7 +76,7 @@ const deleteOne = async (req, res) => {
 
 const getAll = async (req, res) => {
   try {
-    db.query("SELECT * FROM places", (err, rows) => {
+    db.query("SELECT * FROM places ORDER BY ordre ASC", (err, rows) => {
       if (err) {
         console.log(err);
         return res.status(500).json({
