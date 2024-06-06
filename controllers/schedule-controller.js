@@ -72,10 +72,8 @@ const create = async (req, res) => {
 const updateOne = async (req, res) => {
   try {
     const { id } = req.params;
-    const { date, shift, message, idType, idPerson, is_valid } = req.body;
-
-    console.log("bod ", req.body);
-
+    const { date, shift, idType, idPerson, is_valid } = req.body;
+    const message = req.body?.message?.replace(/\s+/g, " ").trim();
     if (Validation.isEmptyOrNull(id)) return res.status(422).json({ message: "Params invalide!" });
 
     let updates = {};
@@ -169,7 +167,7 @@ const updateOne = async (req, res) => {
     values = [...values, updates.type_of_schedule, is_valid];
     values = [...values, id];
 
-    if (!message) {
+    if (message == null) {
       delete updates.message;
       delete updates.is_valid;
       values = values.filter((item) => item !== undefined);

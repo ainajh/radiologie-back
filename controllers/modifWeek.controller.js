@@ -31,7 +31,7 @@ const create = async (req, res) => {
     const allAdminQry = `SELECT * FROM users WHERE role = 'admin' and id != ?`;
 
     db.query(qry, async (err, ress) => {
-      if (ress.length) {
+      if (ress?.length) {
         const planning = modification.substring(1, modification.length - 1).split(", ");
         const nbPlanning = planning.length;
 
@@ -41,7 +41,6 @@ const create = async (req, res) => {
           const emailAdmin = allAdmin.map((item) => item.email);
 
           const semainFormated = formatSemaine(JSON.parse(sem));
-
           await transporter.sendMail({
             from: process.env.SMTP_USER,
             to: emailAdmin,
