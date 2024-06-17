@@ -261,8 +261,6 @@ const toogleValidationPlanning = async (req, res) => {
           });
         }
 
-        
-
         return res.send({
           message: "Modification efféctuée",
           data: rows,
@@ -301,8 +299,14 @@ const deleteOne = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
+  const datesInSQLFormat = req.body?.map((date) => `'${date}'`).join(", ");
+  const request = `SELECT s.id, s.date,s.message, s.shift, s.is_valid as is_valid , s.person_id as idPerson, s.types_id AS idType, s.type_of_schedule AS typeOfSchedule, u.nom , u.email,
+  t.nom_type AS typeLabel, t.nom_sous_type AS subTypeLabel  FROM schedule s
+ LEFT JOIN users u ON s.person_id = u.id
+ LEFT JOIN types t ON s.types_id = t.id WHERE DATE(s.date) IN (${datesInSQLFormat})`;
+ console.log(request);
   try {
-    db.query(QuerySchedule.buildScheduleQuery(), (err, rows) => {
+    db.query(request, (err, rows) => {
       if (err)
         return res.status(500).json({
           message: "Erreur lors de la récupération des scheduless",
@@ -325,7 +329,7 @@ const copyPaste = async (req, res) => {
     const { copyDate, pasteDate } = req.body;
 
     if (!Validation.isDate(copyDate[0]) && !Validation.isDate(copyDate[1]) && !Validation.isDate(pasteDate[0]) && !Validation.isDate([1]))
-      return res.status(422).json({ message: "Data not processable." });
+      return res.status(422).json({ message: "Données non traitables." });
 
     const [dataToCopy, fields] = await dbPromise.query(QuerySchedule.selectDataBetweenDatesQuery, [
       new Date(copyDate[0]).toISOString(),
@@ -400,10 +404,10 @@ const copyPaste = async (req, res) => {
       }
     }
 
-    return res.status(200).json({ data: { copiedId }, message: "Schedule copied successfully! " });
+    return res.status(200).json({ data: { copiedId }, message: "Planning copié avec succès ! " });
   } catch (e) {
     console.log(e);
-    return res.status(500).json({ message: "Error on copyPate! " });
+    return res.status(500).json({ message: "Erreur lors du copier-coller !" });
   }
 };
 
@@ -417,14 +421,14 @@ const undoCopyPaste = (req, res) => {
     db.query(undoQuery, [copiedId], (err, result) => {
       if (err)
         return res.status(500).json({
-          message: "Error when undo change",
+          message: "Erreur lors de l'annulation du changement",
           error: err,
         });
 
-      res.status(200).send({ message: "Undo change successfuly", data: result });
+      res.status(200).send({ message: "Annuler le changement avec succès", data: result });
     });
   } catch (e) {
-    return res.status(500).json({ message: "Error on undo copyPate! " });
+    return res.status(500).json({ message: "Erreur lors de l'annulation de Copy/Collé ! " });
   }
 };
 
