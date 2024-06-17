@@ -261,6 +261,8 @@ const toogleValidationPlanning = async (req, res) => {
           });
         }
 
+        
+
         return res.send({
           message: "Modification efféctuée",
           data: rows,
