@@ -3,7 +3,7 @@ const scheduleController = require("../controllers/schedule-controller");
 const commentaire = require("../controllers/commentSchedule.controller");
 
 router
-  .get("/", scheduleController.getAll)
+  .post("/", scheduleController.getAll)
   .post("/getAllSheduleThisWeek", scheduleController.getAllSheduleThisWeek)
   .post("/deleteAllSheduleThisWeek", scheduleController.deleteAllSheduleThisWeek)
   .get("/undoCopyPaste/:copiedId", scheduleController.undoCopyPaste)

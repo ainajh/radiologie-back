@@ -26,9 +26,30 @@ const create = async (req, res) => {
   }
 };
 
+const updateAthis = async (req, res) => {
+  try {
+    const { id } = req.params;
+    db.query("UPDATE places SET nom_place = 'ATHIS TDM / IRM' WHERE id = ?", [id], (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          error: "Erreur lors de la modification!",
+        });
+      }
+      return res.send({
+        message: "Modification efféctuée",
+      });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({
+      error: "Erreur lors de la modification du Type",
+    });
+  }
+};
 const updateOne = async (req, res) => {
   try {
-    const { id, nom_place } = req.body;
+    const { id } = req.params;
+    const { nom_place } = req.body;
     if (id == null || nom_place == null || id == "" || nom_place == "") {
       return res.status(400).json({
         error: "Champ invalide!",
@@ -100,4 +121,5 @@ module.exports = {
   updateOne,
   deleteOne,
   getAll,
+  updateAthis,
 };

@@ -25,7 +25,6 @@ const formatSemaine = (semaine) => {
 const create = async (req, res) => {
   const dataFromMiddleware = res.locals.userInfo;
   const { semaine, modification, valide } = req.body;
-
   try {
     const qry = `SELECT * FROM week_modif INNER JOIN users on users.id = week_modif.admin_id WHERE week_modif.semaine = "${semaine}"`;
     const allAdminQry = `SELECT * FROM users WHERE role = 'admin' and id != ?`;
@@ -41,23 +40,29 @@ const create = async (req, res) => {
           const emailAdmin = allAdmin.map((item) => item.email);
 
           const semainFormated = formatSemaine(JSON.parse(sem));
-          await transporter.sendMail({
-            from: process.env.SMTP_USER,
-            to: emailAdmin,
-            subject: "Modification planning",
-            html: `
-                  <p>Madame, Monsieur, </p>
-                  <p><strong style="color: red">Attention </strong><strong>${ress[0]?.nom}</strong> à <strong style="color: ${
-              valide ? "green" : "red"
-            }">${valide ? "validé" : "dévalidé"}</strong> le planning  de la semaine du <strong style="text-decoration: underline;">${semainFormated}</strong> </p>
-                  <p>Bonne journée </p>
-                  <p style="color: #652191; font-size:20px">Centres d'Imagerie Médicale </p>
-                  <p style="color: #652191; font-size:20px">Radiologie91</p>
-                  <div><a href="${process.env.FRONT_URL}">${process.env.FRONT_URL}<a/></div>
-                  `,
-          });
+          if (emailAdmin.length) {
+            await transporter.sendMail({
+              from: process.env.SMTP_USER,
+              to: emailAdmin,
+              // to: "ainajh11@gmail.com",
+              subject: "Modification planning",
+              html: `
+                    <p>Madame, Monsieur, </p>
+                    <p><strong style="color: red">Attention </strong><strong>${ress[0]?.nom}</strong> à <strong style="color: ${
+                valide ? "green" : "red"
+              }">${
+                valide ? "validé" : "dévalidé"
+              }</strong> le planning  de la semaine du <strong style="text-decoration: underline;">${semainFormated}</strong> </p>
+                    <p>Bonne journée </p>
+                    <p style="color: #652191; font-size:20px">Centres d'Imagerie Médicale </p>
+                    <p style="color: #652191; font-size:20px">Radiologie91</p>
+                    <div><a href="${process.env.FRONT_URL}">${process.env.FRONT_URL}<a/></div>
+                    `,
+            });
+          }
         });
 
+        db.query(`UPDATE week_modif SET is_valid = ? WHERE semaine = "${semaine}"`, [valide]);
         return res.send({
           message: "Email envoyée avec succès",
         });

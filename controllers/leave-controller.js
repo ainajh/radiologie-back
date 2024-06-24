@@ -5,37 +5,61 @@ const DateUtils = require("../utils/get-list-date-between");
 const Query = require("../utils/build-query");
 
 const create = async (req, res) => {
+  const { idPerson, typeOfLeave, dateStart, dateEnd } = req.body;
+  const dataFromMiddleware = res.locals.userInfo;
   try {
-    const { idPerson, typeOfLeave, dateStart, dateEnd } = req.body;
+    db.query(
+      `SELECT * FROM week_modif 
+      WHERE 
+      '${dateStart}' BETWEEN SUBSTRING_INDEX(SUBSTRING_INDEX(semaine, "', '", 1), "'", -1) AND SUBSTRING_INDEX(SUBSTRING_INDEX(semaine, "', '", -1), "'", 1) AND is_valid = 1
+      OR
+      '${dateEnd}' BETWEEN SUBSTRING_INDEX(SUBSTRING_INDEX(semaine, "', '", 1), "'", -1) AND SUBSTRING_INDEX(SUBSTRING_INDEX(semaine, "', '", -1), "'", 1) AND is_valid = 1
+      `,
+      async (err, result) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json({ message: "Il y a une erreur lors de l'ajout congé" });
+        } else {
+          console.log(result.length);
+          if (result?.length) {
+            const message =
+              dataFromMiddleware.role == "admin"
+                ? "Médecin en vacation cette semaine, merci de dévalider le planning"
+                : "Vous êtes en vacation cette semaine, merci de demander à l’administrateur de dévalider la semaine de travail. ";
+            return res.status(422).json({ error: true, message });
+          } else {
+            if (
+              !Validation.isNumber(idPerson) &&
+              Validation.isEmptyOrNull(typeOfLeave) &&
+              !Validation.isDate(dateStart) &&
+              !Validation.isDate(dateEnd)
+            )
+              return res.status(422).json({ error: true, message: "Data not processable." });
 
-    if (
-      !Validation.isNumber(idPerson) &&
-      Validation.isEmptyOrNull(typeOfLeave) &&
-      !Validation.isDate(dateStart) &&
-      !Validation.isDate(dateEnd)
-    )
-      return res.status(422).json({ message: "Data not processable." });
+            const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckOverlapDate(), [
+              idPerson,
+              new Date(dateEnd).toISOString(),
+              new Date(dateEnd).toISOString(),
+              new Date(dateStart).toISOString(),
+              new Date(dateStart).toISOString(),
+            ]);
 
-    const [isOverlap, field] = await dbPromise.query(Query.buildLeaveSelectForCheckOverlapDate(), [
-      idPerson,
-      new Date(dateEnd).toISOString(),
-      new Date(dateEnd).toISOString(),
-      new Date(dateStart).toISOString(),
-      new Date(dateStart).toISOString(),
-    ]);
+            if (isOverlap.length > 0) return res.status(422).json({ message: "Chevauchement de dates avec une entrée de congé existante" });
 
-    if (isOverlap.length > 0) return res.status(422).json({ message: "Chevauchement de dates avec une entrée de congé existante" });
+            const columns = ["type_of_leave", "person_id", "date_start", "date_end"];
 
-    const columns = ["type_of_leave", "person_id", "date_start", "date_end"];
+            const query = Query.buildInsertQuery("`leave`", columns);
 
-    const query = Query.buildInsertQuery("`leave`", columns);
+            const values = [typeOfLeave, parseInt(idPerson), new Date(dateStart), new Date(dateEnd)];
 
-    const values = [typeOfLeave, parseInt(idPerson), new Date(dateStart), new Date(dateEnd)];
-
-    db.query(query, values, (err, result) => {
-      if (err) return res.status(500).json({ message: "Erreur lors de la création du congé", error: err });
-      return res.status(201).send({ message: "Congés crées  avec succès", data: result });
-    });
+            db.query(query, values, (err, result) => {
+              if (err) return res.status(500).json({ message: "Erreur lors de la création du congé", error: err });
+              return res.status(201).send({ message: "Congés crées  avec succès", data: result });
+            });
+          }
+        }
+      }
+    );
   } catch (e) {
     return res.status(500).json({ message: "Internal Server Error" });
   }
