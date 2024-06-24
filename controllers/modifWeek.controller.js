@@ -43,8 +43,8 @@ const create = async (req, res) => {
           if (emailAdmin.length) {
             await transporter.sendMail({
               from: process.env.SMTP_USER,
-              // to: emailAdmin,
-              to: "ainajh11@gmail.com",
+              to: emailAdmin,
+              // to: "ainajh11@gmail.com",
               subject: "Modification planning",
               html: `
                     <p>Madame, Monsieur, </p>
